@@ -211,7 +211,7 @@ class GameStateManager {
     if (this.remainingShields > 0) {
       this.remainingShields--;
       this.alertMessage = '🛡️ DANFO SHIELD BROKE! HIT ABSORBED!';
-      this.alertTimer = 0.5;
+      this.alertTimer = 1.0;
       this.notify(true);
       return;
     }
@@ -225,8 +225,8 @@ class GameStateManager {
     this.speed = 4.5;
     this.cleanRunDistance = 0;
 
-    // Banner message strictly 0.5s!
-    this.alertTimer = 0.5;
+    // Banner message strictly 1.0s!
+    this.alertTimer = 1.0;
 
     if (this.strikes === 1) {
       // Hit 1: Tripped, Witch closes in fast

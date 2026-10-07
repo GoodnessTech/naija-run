@@ -24,7 +24,7 @@ export function HUD({ onPause }) {
     return unsubscribe;
   }, []);
 
-  // Strict enforcement: Alert banner MUST NOT stay on screen for more than 0.5s!
+  // Strict enforcement: Alert banner and messages stay on screen for exactly 1.0s!
   useEffect(() => {
     if (snapshot.alertMessage) {
       const bannerTimer = setTimeout(() => {
@@ -32,7 +32,7 @@ export function HUD({ onPause }) {
           gameState.alertMessage = '';
           gameState.notify(true);
         }
-      }, 500);
+      }, 1000); // Exactly 1 second
       return () => clearTimeout(bannerTimer);
     }
   }, [snapshot.alertMessage]);
@@ -57,6 +57,17 @@ export function HUD({ onPause }) {
   }
 
   const dangerPercent = Math.max(0, Math.min(100, Math.round(((18.0 - gDist) / 16.0) * 100)));
+
+  // Box alert of SAFE and danger status changes only stays for exactly 1 second on screen!
+  const [showDangerBox, setShowDangerBox] = useState(true);
+
+  useEffect(() => {
+    setShowDangerBox(true);
+    const boxTimer = setTimeout(() => {
+      setShowDangerBox(false);
+    }, 1000); // Exactly 1.0 second
+    return () => clearTimeout(boxTimer);
+  }, [dangerStatus, strikes]);
 
   return (
     <div className="ui-layer" style={{ padding: '16px 20px', justifyContent: 'space-between' }}>
@@ -207,20 +218,26 @@ export function HUD({ onPause }) {
         </div>
       )}
 
-      {/* Witch / Guardian Danger Gauge Bar */}
+      {/* Witch / Guardian Danger Gauge Box Alert - Only stays for 1 second! */}
       <div
         style={{
           alignSelf: 'center',
           maxWidth: '380px',
           width: '100%',
-          marginTop: '6px',
+          marginTop: showDangerBox ? '6px' : '0px',
+          opacity: showDangerBox ? 1 : 0,
+          transform: showDangerBox ? 'translateY(0)' : 'translateY(-8px)',
+          transition: 'opacity 0.25s ease, transform 0.25s ease, max-height 0.3s ease, margin 0.25s ease',
+          maxHeight: showDangerBox ? '80px' : '0px',
+          overflow: 'hidden',
+          pointerEvents: showDangerBox ? 'auto' : 'none',
         }}
       >
         <div
           className="glass-panel"
           style={{
             padding: '8px 14px',
-            borderColor: strikes >= 2 ? 'rgba(239, 68, 68, 0.8)' : 'rgba(0, 135, 81, 0.35)',
+            borderColor: strikes >= 2 ? 'rgba(239, 68, 68, 0.8)' : strikes === 1 ? 'rgba(245, 158, 11, 0.8)' : 'rgba(0, 135, 81, 0.5)',
             boxShadow: strikes >= 2 ? '0 0 20px rgba(239, 68, 68, 0.6)' : undefined,
           }}
         >
@@ -236,7 +253,7 @@ export function HUD({ onPause }) {
                 gap: '6px',
               }}
             >
-              <span>{strikes >= 2 ? '👹' : '🌲'}</span>
+              <span>{strikes >= 2 ? '👹' : strikes === 1 ? '⚠️' : '🌲'}</span>
               <span>{dangerStatus}</span>
             </span>
             <span

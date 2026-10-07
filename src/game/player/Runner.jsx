@@ -194,7 +194,7 @@ export function Runner({ onRunnerUpdate }) {
           gameState.strikes = Math.max(0, gameState.strikes - 1);
           gameState.cleanRunDistance = 0;
           gameState.alertMessage = '✨ DISTANCE RECOVERED! (1/3)';
-          gameState.alertTimer = 0.5; // Strictly <= 0.5s!
+          gameState.alertTimer = 1.0; // Strictly 1.0s!
         }
       }
 
