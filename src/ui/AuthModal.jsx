@@ -70,13 +70,13 @@ export function AuthModal({ onClose }) {
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'rgba(5, 12, 8, 0.94)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        background: 'rgba(87, 80, 116, 0.88)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '12px',
+        padding: '16px',
         boxSizing: 'border-box',
       }}
     >
@@ -84,44 +84,59 @@ export function AuthModal({ onClose }) {
         className="glass-panel"
         style={{
           width: '100%',
-          maxWidth: '480px',
+          maxWidth: '460px',
           maxHeight: '94dvh',
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: '20px',
-          border: '1.5px solid rgba(212, 175, 55, 0.45)',
-          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+          borderRadius: '24px',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 24px 60px rgba(87, 80, 116, 0.35)',
           overflow: 'hidden',
-          background: 'linear-gradient(180deg, #0e1e14 0%, #08110b 100%)',
+          background: '#FFFFFF',
+          color: '#202124',
+          fontFamily: 'var(--font-sf-text)',
         }}
       >
         {/* Header */}
         <div
           style={{
-            padding: '16px 20px',
-            borderBottom: '1px solid rgba(212, 175, 55, 0.25)',
+            padding: '18px 22px',
+            borderBottom: '1px solid #f1f3f4',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: 'rgba(6, 14, 9, 0.92)',
+            background: '#FFFFFF',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '22px' }}>🛡️</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '12px',
+                background: '#EAF8F0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+              }}
+            >
+              🛡️
+            </div>
             <div>
               <h2
                 style={{
                   margin: 0,
-                  fontFamily: "'Cinzel', serif",
-                  fontSize: '1.25rem',
-                  fontWeight: 900,
-                  letterSpacing: '1px',
-                  color: '#fef08a',
+                  fontFamily: 'var(--font-sf-display)',
+                  fontSize: '1.2rem',
+                  fontWeight: 800,
+                  letterSpacing: '-0.3px',
+                  color: '#202124',
                 }}
               >
-                RUNNER ACCOUNT & SYNC
+                Runner Account
               </h2>
-              <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+              <div style={{ fontSize: '0.78rem', color: '#5f6368', marginTop: '2px' }}>
                 Save your career vault & sync to global leaderboard
               </div>
             </div>
@@ -130,7 +145,7 @@ export function AuthModal({ onClose }) {
           <button
             onClick={onClose}
             className="btn-icon"
-            style={{ width: '38px', height: '38px', fontSize: '18px' }}
+            style={{ width: '36px', height: '36px', fontSize: '16px', borderRadius: '50%' }}
             title="Close"
           >
             ✕
@@ -141,12 +156,12 @@ export function AuthModal({ onClose }) {
         {feedback.text && (
           <div
             style={{
-              padding: '10px 16px',
-              background: feedback.isError ? 'rgba(239, 68, 68, 0.25)' : 'rgba(16, 185, 129, 0.25)',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-              color: feedback.isError ? '#fca5a5' : '#34d399',
+              padding: '12px 18px',
+              background: feedback.isError ? '#FFF0F3' : '#EAF8F0',
+              borderBottom: feedback.isError ? '1px solid #ffe3e8' : '1px solid #d5f2e1',
+              color: feedback.isError ? '#c2185b' : '#19B66B',
               fontSize: '0.82rem',
-              fontWeight: 800,
+              fontWeight: 700,
               textAlign: 'center',
             }}
           >
@@ -159,41 +174,42 @@ export function AuthModal({ onClose }) {
           <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div
               style={{
-                background: 'linear-gradient(135deg, rgba(0, 135, 81, 0.25) 0%, rgba(5, 25, 15, 0.7) 100%)',
-                border: '1.5px solid #10b981',
-                borderRadius: '14px',
-                padding: '18px',
+                background: '#EAF8F0',
+                border: '1.5px solid #19B66B',
+                borderRadius: '18px',
+                padding: '20px',
                 textAlign: 'center',
               }}
             >
-              <div style={{ fontSize: '38px', marginBottom: '6px' }}>{profile.avatar}</div>
-              <h3 style={{ margin: '0 0 4px', fontSize: '1.2rem', color: '#f8fafc', fontWeight: 900 }}>
+              <div style={{ fontSize: '40px', marginBottom: '8px' }}>{profile.avatar}</div>
+              <h3 style={{ margin: '0 0 4px', fontSize: '1.25rem', color: '#202124', fontWeight: 800 }}>
                 @{session.username}
               </h3>
-              <div style={{ fontSize: '0.75rem', color: '#34d399', fontWeight: 800, marginBottom: '12px' }}>
-                ● SYNCED RUNNER ACCOUNT
+              <div style={{ fontSize: '0.78rem', color: '#19B66B', fontWeight: 800, marginBottom: '14px' }}>
+                ● SYNCED OFFICIAL RUNNER
               </div>
 
               <div
                 style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
-                  gap: '8px',
-                  background: 'rgba(0, 0, 0, 0.4)',
-                  padding: '12px',
-                  borderRadius: '10px',
+                  gap: '10px',
+                  background: '#FFFFFF',
+                  padding: '14px',
+                  borderRadius: '14px',
                   textAlign: 'left',
+                  boxShadow: '0 2px 8px rgba(32, 33, 36, 0.04)',
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>BANKED VAULT</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 900, color: '#10b981' }}>
+                  <div style={{ fontSize: '0.68rem', color: '#5f6368', fontWeight: 700 }}>VAULT BALANCE</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#19B66B' }}>
                     ₦{profile.wallet.toLocaleString()}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>BEST DISTANCE</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 900, color: '#fef08a' }}>
+                  <div style={{ fontSize: '0.68rem', color: '#5f6368', fontWeight: 700 }}>PEAK DISTANCE</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#2F6FB7' }}>
                     {profile.bestDistance.toLocaleString()}m
                   </div>
                 </div>
@@ -202,18 +218,19 @@ export function AuthModal({ onClose }) {
 
             <button
               onClick={handleLogout}
-              className="btn-secondary"
               style={{
                 width: '100%',
                 height: '46px',
-                borderColor: '#ef4444',
-                color: '#fca5a5',
-                background: 'rgba(239, 68, 68, 0.15)',
-                fontWeight: 800,
+                border: '1px solid #ffd1dc',
+                borderRadius: '12px',
+                color: '#c2185b',
+                background: '#FFF0F3',
+                fontWeight: 700,
                 fontSize: '0.88rem',
+                cursor: 'pointer',
               }}
             >
-              SWITCH ACCOUNT / LOG OUT
+              Switch Account / Log Out
             </button>
           </div>
         ) : (
@@ -222,8 +239,10 @@ export function AuthModal({ onClose }) {
             <div
               style={{
                 display: 'flex',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                background: 'rgba(0, 0, 0, 0.35)',
+                borderBottom: '1px solid #f1f3f4',
+                background: '#f8f9fa',
+                padding: '6px',
+                gap: '6px',
               }}
             >
               <button
@@ -233,21 +252,23 @@ export function AuthModal({ onClose }) {
                 }}
                 style={{
                   flex: 1,
-                  padding: '12px',
+                  padding: '10px',
                   border: 'none',
-                  background: isSignUpTab ? 'rgba(0, 135, 81, 0.35)' : 'transparent',
-                  borderBottom: isSignUpTab ? '3px solid #10b981' : '3px solid transparent',
-                  color: isSignUpTab ? '#f8fafc' : '#94a3b8',
-                  fontWeight: 800,
+                  borderRadius: '10px',
+                  background: isSignUpTab ? '#FFFFFF' : 'transparent',
+                  color: isSignUpTab ? '#202124' : '#5f6368',
+                  boxShadow: isSignUpTab ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                  fontWeight: 700,
                   fontSize: '0.85rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '6px',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                <span>✨</span> SIGN UP (NEW RUNNER)
+                <span>✨</span> New Runner (Sign Up)
               </button>
 
               <button
@@ -257,67 +278,66 @@ export function AuthModal({ onClose }) {
                 }}
                 style={{
                   flex: 1,
-                  padding: '12px',
+                  padding: '10px',
                   border: 'none',
-                  background: !isSignUpTab ? 'rgba(0, 135, 81, 0.35)' : 'transparent',
-                  borderBottom: !isSignUpTab ? '3px solid #10b981' : '3px solid transparent',
-                  color: !isSignUpTab ? '#f8fafc' : '#94a3b8',
-                  fontWeight: 800,
+                  borderRadius: '10px',
+                  background: !isSignUpTab ? '#FFFFFF' : 'transparent',
+                  color: !isSignUpTab ? '#202124' : '#5f6368',
+                  boxShadow: !isSignUpTab ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                  fontWeight: 700,
                   fontSize: '0.85rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '6px',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                <span>🔑</span> LOG IN (EXISTING)
+                <span>🔑</span> Existing Runner (Log In)
               </button>
             </div>
 
             {/* Auth Form with Just Username and Password */}
             <form
               onSubmit={isSignUpTab ? handleSignUp : handleLogin}
-              style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}
+              style={{ padding: '22px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}
             >
               {/* Username Input */}
               <div>
                 <label
                   style={{
                     display: 'block',
-                    fontSize: '0.75rem',
-                    fontWeight: 800,
-                    color: '#cbd5e1',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    color: '#202124',
                     marginBottom: '6px',
-                    letterSpacing: '0.5px',
                   }}
                 >
                   RUNNER USERNAME
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="e.g. LagosSpeedster"
-                    autoComplete="username"
-                    required
-                    style={{
-                      width: '100%',
-                      height: '48px',
-                      padding: '0 14px',
-                      borderRadius: '10px',
-                      border: '1.5px solid rgba(212, 175, 55, 0.35)',
-                      background: 'rgba(0, 0, 0, 0.45)',
-                      color: '#ffffff',
-                      fontSize: '0.95rem',
-                      fontWeight: 700,
-                      outline: 'none',
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g. LagosSpeedster"
+                  autoComplete="username"
+                  required
+                  style={{
+                    width: '100%',
+                    height: '48px',
+                    padding: '0 16px',
+                    borderRadius: '12px',
+                    border: '1.5px solid #dadce0',
+                    background: '#f8f9fa',
+                    color: '#202124',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    fontFamily: 'var(--font-sf-text)',
+                  }}
+                />
               </div>
 
               {/* Password Input */}
@@ -325,10 +345,9 @@ export function AuthModal({ onClose }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <label
                     style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 800,
-                      color: '#cbd5e1',
-                      letterSpacing: '0.5px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      color: '#202124',
                     }}
                   >
                     RUNNER PASSWORD
@@ -339,8 +358,8 @@ export function AuthModal({ onClose }) {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: '#94a3b8',
-                      fontSize: '0.72rem',
+                      color: '#2F6FB7',
+                      fontSize: '0.75rem',
                       cursor: 'pointer',
                       fontWeight: 700,
                     }}
@@ -359,16 +378,16 @@ export function AuthModal({ onClose }) {
                   style={{
                     width: '100%',
                     height: '48px',
-                    padding: '0 14px',
-                    borderRadius: '10px',
-                    border: '1.5px solid rgba(212, 175, 55, 0.35)',
-                    background: 'rgba(0, 0, 0, 0.45)',
-                    color: '#ffffff',
+                    padding: '0 16px',
+                    borderRadius: '12px',
+                    border: '1.5px solid #dadce0',
+                    background: '#f8f9fa',
+                    color: '#202124',
                     fontSize: '0.95rem',
-                    fontWeight: 700,
+                    fontWeight: 600,
                     outline: 'none',
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                     boxSizing: 'border-box',
+                    fontFamily: 'var(--font-sf-text)',
                   }}
                 />
               </div>
@@ -377,16 +396,17 @@ export function AuthModal({ onClose }) {
               {isSignUpTab && (
                 <div
                   style={{
-                    background: 'rgba(0, 135, 81, 0.2)',
-                    border: '1px solid rgba(16, 185, 129, 0.4)',
-                    borderRadius: '10px',
-                    padding: '10px 12px',
-                    fontSize: '0.75rem',
-                    color: '#34d399',
-                    lineHeight: 1.4,
+                    background: '#EAF8F0',
+                    border: '1px solid #d5f2e1',
+                    borderRadius: '12px',
+                    padding: '12px 14px',
+                    fontSize: '0.78rem',
+                    color: '#19B66B',
+                    lineHeight: 1.45,
+                    fontWeight: 600,
                   }}
                 >
-                  🎉 <strong>Federal Grant Included:</strong> Signing up grants your account an initial ₦250,000 vault starter balance and activates instant sync to the Global Leaderboard!
+                  🎉 <strong>₦250,000 Starter Grant Included:</strong> Registering activates an immediate ₦250k vault credit and synchronizes your runs to the Verified Leaderboard!
                 </div>
               )}
 
@@ -397,12 +417,12 @@ export function AuthModal({ onClose }) {
                 style={{
                   width: '100%',
                   height: '48px',
-                  fontSize: '0.95rem',
-                  letterSpacing: '1px',
+                  fontSize: '0.98rem',
                   marginTop: '4px',
+                  background: '#19B66B',
                 }}
               >
-                {isSignUpTab ? 'REGISTER & SYNC RUNS' : 'LOG IN & LOAD PROFILE'}
+                {isSignUpTab ? 'Register & Sync Runs' : 'Log In & Load Vault'}
               </button>
             </form>
           </div>

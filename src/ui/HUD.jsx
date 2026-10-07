@@ -92,11 +92,11 @@ export function HUD({ onPause }) {
               minWidth: '95px',
             }}
           >
-            <span style={{ fontSize: '0.65rem', color: '#94a3b8', letterSpacing: '1px', fontWeight: 700 }}>
+            <span style={{ fontSize: '0.65rem', color: '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
               DISTANCE
             </span>
-            <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#f8fafc', fontFamily: "'Plus Jakarta Sans', monospace" }}>
-              {snapshot.distance} <span style={{ fontSize: '0.75rem', color: '#64748b' }}>m</span>
+            <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#202124', fontFamily: "var(--font-sf-display)" }}>
+              {snapshot.distance} <span style={{ fontSize: '0.75rem', color: '#5f6368' }}>m</span>
             </span>
           </div>
 
@@ -107,22 +107,23 @@ export function HUD({ onPause }) {
               padding: '8px 16px',
               display: 'flex',
               flexDirection: 'column',
-              minWidth: '120px',
-              border: cashPop ? '2px solid #34d399' : '1px solid rgba(16, 185, 129, 0.4)',
+              minWidth: '125px',
+              border: cashPop ? '2px solid #19B66B' : '1px solid rgba(25, 182, 107, 0.35)',
+              background: '#EAF8F0',
               transform: cashPop ? 'scale(1.08)' : 'scale(1)',
               transition: 'transform 0.15s ease, border-color 0.15s ease',
-              boxShadow: cashPop ? '0 0 20px rgba(16, 185, 129, 0.7)' : undefined,
+              boxShadow: cashPop ? '0 4px 20px rgba(25, 182, 107, 0.4)' : undefined,
             }}
           >
-            <span style={{ fontSize: '0.65rem', color: '#34d399', letterSpacing: '1px', fontWeight: 700 }}>
+            <span style={{ fontSize: '0.65rem', color: '#19B66B', letterSpacing: '0.8px', fontWeight: 800 }}>
               NAIRA BALANCE
             </span>
             <span
               style={{
                 fontSize: '1.25rem',
                 fontWeight: 900,
-                color: '#10b981',
-                fontFamily: "'Plus Jakarta Sans', monospace",
+                color: '#19B66B',
+                fontFamily: "var(--font-sf-display)",
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
@@ -142,10 +143,10 @@ export function HUD({ onPause }) {
               minWidth: '100px',
             }}
           >
-            <span style={{ fontSize: '0.65rem', color: '#fbbf24', letterSpacing: '1px', fontWeight: 700 }}>
+            <span style={{ fontSize: '0.65rem', color: '#2F6FB7', letterSpacing: '0.8px', fontWeight: 800 }}>
               SCORE
             </span>
-            <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fbbf24', fontFamily: "'Plus Jakarta Sans', monospace" }}>
+            <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#2F6FB7', fontFamily: "var(--font-sf-display)" }}>
               {snapshot.score.toLocaleString()}
             </span>
           </div>
@@ -158,15 +159,15 @@ export function HUD({ onPause }) {
                 padding: '8px 14px',
                 display: 'flex',
                 flexDirection: 'column',
-                border: '1px solid #38bdf8',
-                background: 'rgba(56, 189, 248, 0.15)',
-                boxShadow: '0 0 15px rgba(56, 189, 248, 0.4)',
+                border: '1.5px solid #2F6FB7',
+                background: '#FFFFFF',
+                boxShadow: '0 4px 14px rgba(47, 111, 183, 0.25)',
               }}
             >
-              <span style={{ fontSize: '0.65rem', color: '#38bdf8', letterSpacing: '1px', fontWeight: 800 }}>
+              <span style={{ fontSize: '0.65rem', color: '#2F6FB7', letterSpacing: '0.8px', fontWeight: 800 }}>
                 SHIELD
               </span>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#38bdf8', fontFamily: "'Plus Jakarta Sans', monospace" }}>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#2F6FB7', fontFamily: "var(--font-sf-display)" }}>
                 🛡️ {snapshot.remainingShields}
               </span>
             </div>
@@ -200,16 +201,16 @@ export function HUD({ onPause }) {
         <div
           style={{
             alignSelf: 'center',
-            background: strikes >= 2 ? 'rgba(185, 28, 28, 0.9)' : 'rgba(217, 119, 6, 0.9)',
-            border: '2px solid #ffffff',
-            borderRadius: '12px',
-            padding: '10px 24px',
-            color: '#ffffff',
-            fontWeight: 900,
+            background: strikes >= 2 ? '#FFF0F3' : '#FFFFFF',
+            border: strikes >= 2 ? '2px solid #d92550' : '2px solid #2F6FB7',
+            borderRadius: '16px',
+            padding: '12px 28px',
+            color: strikes >= 2 ? '#d92550' : '#202124',
+            fontWeight: 800,
             fontSize: '1rem',
-            letterSpacing: '1px',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.8)',
-            animation: 'pulse-guardian-glow 1s infinite ease-in-out',
+            fontFamily: "var(--font-sf-display)",
+            letterSpacing: '0.5px',
+            boxShadow: '0 12px 36px rgba(87, 80, 116, 0.35)',
             textAlign: 'center',
             maxWidth: '90%',
           }}
@@ -237,20 +238,22 @@ export function HUD({ onPause }) {
           className="glass-panel"
           style={{
             padding: '8px 14px',
-            borderColor: strikes >= 2 ? 'rgba(239, 68, 68, 0.8)' : strikes === 1 ? 'rgba(245, 158, 11, 0.8)' : 'rgba(0, 135, 81, 0.5)',
-            boxShadow: strikes >= 2 ? '0 0 20px rgba(239, 68, 68, 0.6)' : undefined,
+            border: strikes >= 2 ? '1.5px solid #d92550' : strikes === 1 ? '1.5px solid #2F6FB7' : '1px solid rgba(0, 0, 0, 0.08)',
+            background: strikes >= 2 ? '#FFF0F3' : '#FFFFFF',
+            boxShadow: strikes >= 2 ? '0 8px 24px rgba(217, 37, 80, 0.2)' : '0 8px 24px rgba(32, 33, 36, 0.08)',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
             <span
               style={{
                 fontSize: '0.72rem',
                 fontWeight: 800,
-                letterSpacing: '1px',
-                color: dangerColor,
+                letterSpacing: '0.5px',
+                color: strikes >= 2 ? '#d92550' : strikes === 1 ? '#2F6FB7' : '#19B66B',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
+                fontFamily: "var(--font-sf-text)",
               }}
             >
               <span>{strikes >= 2 ? '👹' : strikes === 1 ? '⚠️' : '🌲'}</span>
@@ -259,9 +262,9 @@ export function HUD({ onPause }) {
             <span
               style={{
                 fontSize: '0.75rem',
-                fontWeight: 800,
-                color: dangerColor,
-                fontFamily: "'Plus Jakarta Sans', monospace",
+                fontWeight: 900,
+                color: strikes >= 2 ? '#d92550' : strikes === 1 ? '#2F6FB7' : '#19B66B',
+                fontFamily: "var(--font-sf-display)",
               }}
             >
               {snapshot.guardianDistance.toFixed(1)}m
@@ -272,7 +275,7 @@ export function HUD({ onPause }) {
             style={{
               width: '100%',
               height: '6px',
-              background: 'rgba(255, 255, 255, 0.1)',
+              background: 'rgba(0, 0, 0, 0.06)',
               borderRadius: '999px',
               overflow: 'hidden',
             }}
@@ -281,7 +284,7 @@ export function HUD({ onPause }) {
               style={{
                 width: `${dangerPercent}%`,
                 height: '100%',
-                background: dangerColor,
+                background: strikes >= 2 ? '#d92550' : strikes === 1 ? '#2F6FB7' : '#19B66B',
                 borderRadius: '999px',
                 transition: 'width 0.2s ease, background 0.3s ease',
               }}
@@ -309,14 +312,15 @@ export function HUD({ onPause }) {
                 width: '62px',
                 height: '62px',
                 borderRadius: '50%',
-                background: 'rgba(15, 35, 22, 0.8)',
-                border: '2px solid rgba(0, 135, 81, 0.6)',
-                color: '#fff',
-                fontSize: '24px',
+                background: '#FFFFFF',
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                color: '#202124',
+                fontSize: '22px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.5)',
+                boxShadow: '0 6px 18px rgba(32, 33, 36, 0.15)',
+                cursor: 'pointer',
               }}
               aria-label="Steer Left"
             >
@@ -328,14 +332,15 @@ export function HUD({ onPause }) {
                 width: '62px',
                 height: '62px',
                 borderRadius: '50%',
-                background: 'rgba(15, 35, 22, 0.8)',
-                border: '2px solid rgba(0, 135, 81, 0.6)',
-                color: '#fff',
-                fontSize: '24px',
+                background: '#FFFFFF',
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                color: '#202124',
+                fontSize: '22px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.5)',
+                boxShadow: '0 6px 18px rgba(32, 33, 36, 0.15)',
+                cursor: 'pointer',
               }}
               aria-label="Steer Right"
             >
@@ -350,15 +355,18 @@ export function HUD({ onPause }) {
                 width: '62px',
                 height: '62px',
                 borderRadius: '50%',
-                background: 'rgba(40, 20, 15, 0.8)',
-                border: '2px solid rgba(200, 75, 49, 0.6)',
-                color: '#fff',
-                fontSize: '14px',
-                fontWeight: 800,
+                background: '#FFF0F3',
+                border: '1.5px solid rgba(217, 37, 80, 0.3)',
+                color: '#d92550',
+                fontSize: '12px',
+                fontWeight: 900,
+                fontFamily: "var(--font-sf-display)",
+                letterSpacing: '0.5px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.5)',
+                boxShadow: '0 6px 18px rgba(217, 37, 80, 0.15)',
+                cursor: 'pointer',
               }}
               aria-label="Slide"
             >
@@ -370,15 +378,18 @@ export function HUD({ onPause }) {
                 width: '68px',
                 height: '68px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #008751 0%, #065f38 100%)',
-                border: '2px solid #34d399',
-                color: '#fff',
-                fontSize: '15px',
+                background: '#19B66B',
+                border: 'none',
+                color: '#ffffff',
+                fontSize: '13px',
                 fontWeight: 900,
+                fontFamily: "var(--font-sf-display)",
+                letterSpacing: '0.5px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 6px 18px rgba(0, 135, 81, 0.6)',
+                boxShadow: '0 8px 24px rgba(25, 182, 107, 0.4)',
+                cursor: 'pointer',
               }}
               aria-label="Jump"
             >

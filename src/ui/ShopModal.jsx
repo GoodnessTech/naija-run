@@ -44,13 +44,13 @@ export function ShopModal({ onClose }) {
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'rgba(5, 12, 8, 0.94)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        background: 'rgba(87, 80, 116, 0.88)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '12px',
+        padding: '16px',
         boxSizing: 'border-box',
       }}
     >
@@ -63,42 +63,44 @@ export function ShopModal({ onClose }) {
           maxHeight: '94dvh',
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: '20px',
-          border: '1.5px solid rgba(212, 175, 55, 0.45)',
-          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+          borderRadius: '24px',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 24px 60px rgba(87, 80, 116, 0.35)',
           overflow: 'hidden',
-          background: 'linear-gradient(180deg, #0e1e14 0%, #08110b 100%)',
+          background: '#FFFFFF',
+          color: '#202124',
+          fontFamily: 'var(--font-sf-text)',
         }}
       >
-        {/* Sticky Mobile Header */}
+        {/* Sticky Header */}
         <div
           style={{
-            padding: '14px 18px',
-            borderBottom: '1px solid rgba(212, 175, 55, 0.25)',
+            padding: '18px 22px',
+            borderBottom: '1px solid #f1f3f4',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: 'rgba(6, 14, 9, 0.92)',
+            background: '#FFFFFF',
             flexShrink: 0,
           }}
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '20px' }}>🇳🇬</span>
+              <span style={{ fontSize: '22px' }}>🇳🇬</span>
               <h2
                 style={{
                   margin: 0,
-                  fontFamily: "'Cinzel', serif",
-                  fontSize: 'clamp(1.1rem, 3.5vw, 1.35rem)',
-                  fontWeight: 900,
-                  letterSpacing: '1.5px',
-                  color: '#fef08a',
+                  fontFamily: 'var(--font-sf-display)',
+                  fontSize: '1.25rem',
+                  fontWeight: 800,
+                  letterSpacing: '-0.3px',
+                  color: '#202124',
                 }}
               >
-                NAIJA FLEET & ASSET VAULT
+                Naija Fleet & Asset Vault
               </h2>
             </div>
-            <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '2px' }}>
+            <div style={{ fontSize: '0.78rem', color: '#5f6368', marginTop: '2px' }}>
               Real Nigerian luxury rides, Lekki estates & ancestral regalia
             </div>
           </div>
@@ -107,22 +109,22 @@ export function ShopModal({ onClose }) {
             {/* Live Wallet Balance */}
             <div
               style={{
-                background: 'rgba(0, 135, 81, 0.25)',
-                border: '1.5px solid #10b981',
-                borderRadius: '10px',
-                padding: '6px 12px',
+                background: '#EAF8F0',
+                border: '1px solid #d5f2e1',
+                borderRadius: '12px',
+                padding: '6px 14px',
                 textAlign: 'right',
               }}
             >
-              <div style={{ fontSize: '0.6rem', color: '#34d399', fontWeight: 800, letterSpacing: '0.5px' }}>
+              <div style={{ fontSize: '0.62rem', color: '#5f6368', fontWeight: 700, letterSpacing: '0.5px' }}>
                 AVAILABLE NAIRA
               </div>
               <div
                 style={{
                   fontSize: 'clamp(0.95rem, 3vw, 1.15rem)',
-                  fontWeight: 900,
-                  color: '#10b981',
-                  fontFamily: "'Plus Jakarta Sans', monospace",
+                  fontWeight: 800,
+                  color: '#19B66B',
+                  fontFamily: 'var(--font-sf-display)',
                 }}
               >
                 ₦{profile.wallet.toLocaleString()}
@@ -132,7 +134,7 @@ export function ShopModal({ onClose }) {
             <button
               onClick={onClose}
               className="btn-icon"
-              style={{ width: '38px', height: '38px', fontSize: '18px', flexShrink: 0 }}
+              style={{ width: '36px', height: '36px', fontSize: '16px', borderRadius: '50%', flexShrink: 0 }}
               title="Close"
               aria-label="Close Shop"
             >
@@ -145,12 +147,12 @@ export function ShopModal({ onClose }) {
         {feedback && (
           <div
             style={{
-              padding: '8px 16px',
-              background: feedback.includes('Successfully') ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.25)',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-              color: feedback.includes('Successfully') ? '#34d399' : '#fca5a5',
-              fontSize: '0.8rem',
-              fontWeight: 800,
+              padding: '10px 18px',
+              background: feedback.includes('Successfully') ? '#EAF8F0' : '#FFF0F3',
+              borderBottom: feedback.includes('Successfully') ? '1px solid #d5f2e1' : '1px solid #ffe3e8',
+              color: feedback.includes('Successfully') ? '#19B66B' : '#c2185b',
+              fontSize: '0.82rem',
+              fontWeight: 700,
               textAlign: 'center',
               flexShrink: 0,
             }}
@@ -159,14 +161,14 @@ export function ShopModal({ onClose }) {
           </div>
         )}
 
-        {/* Category Navigation Tabs (Mobile-Friendly Thumb Reach) */}
+        {/* Category Navigation Tabs */}
         <div
           style={{
             display: 'flex',
-            padding: '8px 12px 0',
-            gap: '6px',
-            background: 'rgba(0, 0, 0, 0.35)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            padding: '10px 16px',
+            gap: '8px',
+            background: '#f8f9fa',
+            borderBottom: '1px solid #f1f3f4',
             flexShrink: 0,
           }}
         >
@@ -175,20 +177,20 @@ export function ShopModal({ onClose }) {
             style={{
               flex: 1,
               padding: '10px 8px',
-              minHeight: '44px',
-              border: 'none',
-              background: activeTab === ITEM_CATEGORIES.VEHICLE ? 'rgba(0, 135, 81, 0.35)' : 'transparent',
-              borderBottom: activeTab === ITEM_CATEGORIES.VEHICLE ? '3px solid #10b981' : '3px solid transparent',
-              color: activeTab === ITEM_CATEGORIES.VEHICLE ? '#f8fafc' : '#94a3b8',
+              minHeight: '42px',
+              border: activeTab === ITEM_CATEGORIES.VEHICLE ? '1.5px solid #19B66B' : '1px solid #e8eaed',
+              background: activeTab === ITEM_CATEGORIES.VEHICLE ? '#EAF8F0' : '#FFFFFF',
+              color: activeTab === ITEM_CATEGORIES.VEHICLE ? '#19B66B' : '#5f6368',
               fontWeight: 800,
-              fontSize: 'clamp(0.75rem, 2.5vw, 0.85rem)',
+              fontSize: '0.84rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '6px',
-              borderRadius: '8px 8px 0 0',
+              borderRadius: '12px',
               transition: 'all 0.15s ease',
+              boxShadow: activeTab === ITEM_CATEGORIES.VEHICLE ? '0 2px 8px rgba(25, 182, 107, 0.15)' : 'none',
             }}
           >
             <span>🚗</span> RIDES & GARAGE
@@ -199,20 +201,20 @@ export function ShopModal({ onClose }) {
             style={{
               flex: 1,
               padding: '10px 8px',
-              minHeight: '44px',
-              border: 'none',
-              background: activeTab === ITEM_CATEGORIES.HOUSE ? 'rgba(0, 135, 81, 0.35)' : 'transparent',
-              borderBottom: activeTab === ITEM_CATEGORIES.HOUSE ? '3px solid #10b981' : '3px solid transparent',
-              color: activeTab === ITEM_CATEGORIES.HOUSE ? '#f8fafc' : '#94a3b8',
+              minHeight: '42px',
+              border: activeTab === ITEM_CATEGORIES.HOUSE ? '1.5px solid #2F6FB7' : '1px solid #e8eaed',
+              background: activeTab === ITEM_CATEGORIES.HOUSE ? '#eef4fb' : '#FFFFFF',
+              color: activeTab === ITEM_CATEGORIES.HOUSE ? '#2F6FB7' : '#5f6368',
               fontWeight: 800,
-              fontSize: 'clamp(0.75rem, 2.5vw, 0.85rem)',
+              fontSize: '0.84rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '6px',
-              borderRadius: '8px 8px 0 0',
+              borderRadius: '12px',
               transition: 'all 0.15s ease',
+              boxShadow: activeTab === ITEM_CATEGORIES.HOUSE ? '0 2px 8px rgba(47, 111, 183, 0.15)' : 'none',
             }}
           >
             <span>🏰</span> REAL ESTATE
@@ -223,20 +225,20 @@ export function ShopModal({ onClose }) {
             style={{
               flex: 1,
               padding: '10px 8px',
-              minHeight: '44px',
-              border: 'none',
-              background: activeTab === ITEM_CATEGORIES.ACCESSORY ? 'rgba(0, 135, 81, 0.35)' : 'transparent',
-              borderBottom: activeTab === ITEM_CATEGORIES.ACCESSORY ? '3px solid #10b981' : '3px solid transparent',
-              color: activeTab === ITEM_CATEGORIES.ACCESSORY ? '#f8fafc' : '#94a3b8',
+              minHeight: '42px',
+              border: activeTab === ITEM_CATEGORIES.ACCESSORY ? '1.5px solid #19B66B' : '1px solid #e8eaed',
+              background: activeTab === ITEM_CATEGORIES.ACCESSORY ? '#EAF8F0' : '#FFFFFF',
+              color: activeTab === ITEM_CATEGORIES.ACCESSORY ? '#19B66B' : '#5f6368',
               fontWeight: 800,
-              fontSize: 'clamp(0.75rem, 2.5vw, 0.85rem)',
+              fontSize: '0.84rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '6px',
-              borderRadius: '8px 8px 0 0',
+              borderRadius: '12px',
               transition: 'all 0.15s ease',
+              boxShadow: activeTab === ITEM_CATEGORIES.ACCESSORY ? '0 2px 8px rgba(25, 182, 107, 0.15)' : 'none',
             }}
           >
             <span>👑</span> SACRED DRIP
@@ -246,12 +248,13 @@ export function ShopModal({ onClose }) {
         {/* Catalog Items Scrollable Grid */}
         <div
           style={{
-            padding: '14px 16px',
+            padding: '16px',
             overflowY: 'auto',
             display: 'flex',
             flexDirection: 'column',
             gap: '14px',
             flex: 1,
+            background: '#FFFFFF',
             WebkitOverflowScrolling: 'touch',
           }}
         >
@@ -268,21 +271,19 @@ export function ShopModal({ onClose }) {
                 key={item.id}
                 style={{
                   background: isEquipped
-                    ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(6, 25, 15, 0.7) 100%)'
-                    : isOwned
-                    ? 'rgba(255, 255, 255, 0.04)'
-                    : 'rgba(10, 20, 14, 0.55)',
+                    ? '#EAF8F0'
+                    : '#FFFFFF',
                   border: isEquipped
-                    ? '2px solid #10b981'
-                    : isOwned
-                    ? '1.5px solid rgba(212, 175, 55, 0.4)'
-                    : '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '16px',
-                  padding: '14px',
+                    ? '1.5px solid #19B66B'
+                    : '1px solid #e8eaed',
+                  borderRadius: '18px',
+                  padding: '16px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '12px',
-                  boxShadow: isEquipped ? '0 0 20px rgba(16, 185, 129, 0.25)' : '0 4px 16px rgba(0,0,0,0.5)',
+                  boxShadow: isEquipped
+                    ? '0 4px 16px rgba(25, 182, 107, 0.15)'
+                    : '0 2px 10px rgba(32, 33, 36, 0.04)',
                 }}
               >
                 {/* Image + Title Row */}
@@ -295,10 +296,10 @@ export function ShopModal({ onClose }) {
                       borderRadius: '14px',
                       overflow: 'hidden',
                       flexShrink: 0,
-                      border: '1.5px solid rgba(212, 175, 55, 0.5)',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.7)',
+                      border: '1px solid #dadce0',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                       position: 'relative',
-                      background: '#040906',
+                      background: '#f8f9fa',
                     }}
                   >
                     <img
@@ -319,13 +320,13 @@ export function ShopModal({ onClose }) {
                           bottom: 0,
                           left: 0,
                           right: 0,
-                          background: 'rgba(0,0,0,0.78)',
-                          color: '#fef08a',
+                          background: 'rgba(32, 33, 36, 0.85)',
+                          color: '#ffffff',
                           fontSize: '0.55rem',
-                          fontWeight: 900,
+                          fontWeight: 800,
                           textAlign: 'center',
                           padding: '2px 0',
-                          letterSpacing: '0.5px',
+                          letterSpacing: '0.3px',
                         }}
                       >
                         {item.tag}
@@ -339,9 +340,9 @@ export function ShopModal({ onClose }) {
                       <h3
                         style={{
                           margin: '0 0 2px',
-                          fontSize: 'clamp(0.95rem, 3vw, 1.08rem)',
+                          fontSize: '1rem',
                           fontWeight: 800,
-                          color: '#f8fafc',
+                          color: '#202124',
                           lineHeight: 1.25,
                         }}
                       >
@@ -351,13 +352,13 @@ export function ShopModal({ onClose }) {
                       {isOwned && (
                         <span
                           style={{
-                            background: isEquipped ? '#10b981' : 'rgba(212, 175, 55, 0.25)',
-                            color: isEquipped ? '#000' : '#fef08a',
+                            background: isEquipped ? '#19B66B' : '#EAF8F0',
+                            color: isEquipped ? '#ffffff' : '#19B66B',
                             fontSize: '0.62rem',
-                            fontWeight: 900,
-                            letterSpacing: '0.5px',
-                            padding: '2px 7px',
-                            borderRadius: '5px',
+                            fontWeight: 800,
+                            letterSpacing: '0.4px',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
                             flexShrink: 0,
                           }}
                         >
@@ -370,14 +371,14 @@ export function ShopModal({ onClose }) {
                     <div
                       style={{
                         fontSize: '1.05rem',
-                        fontWeight: 900,
-                        color: isOwned ? '#94a3b8' : canAfford ? '#fbbf24' : '#ef4444',
-                        fontFamily: "'Plus Jakarta Sans', monospace",
+                        fontWeight: 800,
+                        color: isOwned ? '#5f6368' : canAfford ? '#19B66B' : '#c2185b',
+                        fontFamily: 'var(--font-sf-display)',
                         marginTop: '2px',
                       }}
                     >
                       {isOwned ? (
-                        <span style={{ fontSize: '0.8rem', color: '#10b981' }}>✓ In Your Vault</span>
+                        <span style={{ fontSize: '0.82rem', color: '#19B66B', fontWeight: 700 }}>✓ In Your Vault</span>
                       ) : (
                         `₦${item.price.toLocaleString()}`
                       )}
@@ -386,8 +387,8 @@ export function ShopModal({ onClose }) {
                     <p
                       style={{
                         margin: '4px 0 0',
-                        fontSize: '0.75rem',
-                        color: '#94a3b8',
+                        fontSize: '0.76rem',
+                        color: '#5f6368',
                         lineHeight: 1.35,
                       }}
                     >
@@ -399,36 +400,36 @@ export function ShopModal({ onClose }) {
                 {/* Gameplay Perk Badge */}
                 <div
                   style={{
-                    background: 'rgba(0, 135, 81, 0.22)',
-                    border: '1px solid rgba(16, 185, 129, 0.45)',
-                    borderRadius: '8px',
-                    padding: '6px 10px',
-                    fontSize: '0.72rem',
-                    fontWeight: 800,
-                    color: '#34d399',
+                    background: '#EAF8F0',
+                    border: '1px solid #d5f2e1',
+                    borderRadius: '10px',
+                    padding: '8px 12px',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    color: '#19B66B',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
                   }}
                 >
-                  <span style={{ color: '#fbbf24' }}>⚡ PERK:</span> {item.perkText}
+                  <span style={{ color: '#2F6FB7' }}>⚡ PERK:</span> {item.perkText}
                 </div>
 
-                {/* Action Button: Touch Target >= 48px */}
+                {/* Action Button */}
                 <div>
                   {isEquipped ? (
                     <button
                       disabled
                       style={{
                         width: '100%',
-                        height: '46px',
-                        borderRadius: '10px',
-                        background: 'rgba(16, 185, 129, 0.25)',
-                        border: '1.5px solid #10b981',
-                        color: '#34d399',
-                        fontWeight: 900,
+                        height: '44px',
+                        borderRadius: '12px',
+                        background: '#EAF8F0',
+                        border: '1.5px solid #19B66B',
+                        color: '#19B66B',
+                        fontWeight: 800,
                         fontSize: '0.85rem',
-                        letterSpacing: '1px',
+                        letterSpacing: '0.5px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -441,22 +442,11 @@ export function ShopModal({ onClose }) {
                   ) : isOwned ? (
                     <button
                       onClick={() => handleEquip(item)}
+                      className="btn-blue"
                       style={{
                         width: '100%',
-                        height: '46px',
-                        borderRadius: '10px',
-                        background: 'linear-gradient(135deg, #008751 0%, #034f2f 100%)',
-                        border: '1.5px solid #34d399',
-                        color: '#ffffff',
-                        fontWeight: 900,
+                        height: '44px',
                         fontSize: '0.88rem',
-                        letterSpacing: '1px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 12px rgba(0, 135, 81, 0.4)',
                       }}
                     >
                       ⚡ EQUIP THIS ASSET
@@ -465,26 +455,21 @@ export function ShopModal({ onClose }) {
                     <button
                       onClick={() => handleBuy(item)}
                       disabled={!canAfford}
+                      className={canAfford ? 'btn-primary' : ''}
                       style={{
                         width: '100%',
-                        height: '46px',
-                        borderRadius: '10px',
-                        background: canAfford
-                          ? 'linear-gradient(135deg, #d97706 0%, #b45309 100%)'
-                          : 'rgba(255, 255, 255, 0.05)',
-                        border: canAfford
-                          ? '1.5px solid #fbbf24'
-                          : '1px solid rgba(255, 255, 255, 0.1)',
-                        color: canAfford ? '#ffffff' : '#64748b',
-                        fontWeight: 900,
+                        height: '44px',
+                        borderRadius: '12px',
+                        border: canAfford ? 'none' : '1px solid #e8eaed',
+                        background: canAfford ? '#19B66B' : '#f1f3f4',
+                        color: canAfford ? '#ffffff' : '#80868b',
+                        fontWeight: 800,
                         fontSize: '0.88rem',
-                        letterSpacing: '0.8px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '6px',
                         cursor: canAfford ? 'pointer' : 'not-allowed',
-                        boxShadow: canAfford ? '0 4px 16px rgba(217, 119, 6, 0.4)' : undefined,
                       }}
                     >
                       {canAfford ? `ACQUIRE FOR ₦${item.price.toLocaleString()}` : `NEED ₦${(item.price - profile.wallet).toLocaleString()} MORE`}

@@ -49,7 +49,7 @@ export function MainMenu({ onPlay }) {
         flexDirection: 'column',
         justifyContent: 'space-between',
         padding: '24px 20px',
-        background: 'linear-gradient(180deg, rgba(6, 14, 8, 0.55) 0%, rgba(3, 8, 4, 0.88) 100%)',
+        background: 'linear-gradient(180deg, rgba(87, 80, 116, 0.4) 0%, rgba(32, 33, 36, 0.78) 100%)',
       }}
     >
       {/* Top Bar: Profile Card, Sound toggle & Branding */}
@@ -61,28 +61,27 @@ export function MainMenu({ onPlay }) {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
-            padding: '6px 14px',
-            border: '1px solid rgba(0, 135, 81, 0.5)',
-            borderRadius: '14px',
-            background: 'rgba(0, 20, 10, 0.65)',
+            gap: '12px',
+            padding: '8px 16px',
+            borderRadius: '16px',
             cursor: 'pointer',
             textAlign: 'left',
-            transition: 'transform 0.15s ease',
+            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+            border: '1px solid rgba(0, 0, 0, 0.08)',
           }}
           title="Edit Runner Profile & Stats"
         >
           <div
             style={{
-              fontSize: '24px',
-              width: '38px',
-              height: '38px',
+              fontSize: '22px',
+              width: '40px',
+              height: '40px',
               borderRadius: '50%',
-              background: 'rgba(0, 135, 81, 0.3)',
+              background: '#EAF8F0',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '1px solid #10b981',
+              border: '1.5px solid #19B66B',
             }}
           >
             {profile.avatar}
@@ -90,14 +89,14 @@ export function MainMenu({ onPlay }) {
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontWeight: 800, fontSize: '0.85rem', color: '#f8fafc' }}>
+              <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#202124', fontFamily: 'var(--font-sf-display)' }}>
                 {profile.username}
               </span>
-              <span style={{ fontSize: '0.6rem', color: '#34d399', background: 'rgba(16, 185, 129, 0.2)', padding: '1px 5px', borderRadius: '4px' }}>
+              <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#19B66B', background: '#EAF8F0', padding: '2px 6px', borderRadius: '6px' }}>
                 {profile.title}
               </span>
             </div>
-            <div style={{ fontSize: '0.75rem', fontWeight: 900, color: '#10b981', fontFamily: "'Plus Jakarta Sans', monospace" }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#19B66B', fontFamily: 'var(--font-sf-text)' }}>
               VAULT: ₦{profile.wallet.toLocaleString()}
             </div>
           </div>
@@ -110,17 +109,18 @@ export function MainMenu({ onPlay }) {
             onClick={() => setShowAuthModal(true)}
             className="glass-panel"
             style={{
-              padding: '8px 12px',
-              border: session.isLoggedIn ? '1.5px solid #10b981' : '1.5px solid #fbbf24',
-              borderRadius: '10px',
-              color: session.isLoggedIn ? '#34d399' : '#fbbf24',
+              padding: '10px 14px',
+              borderRadius: '12px',
+              color: session.isLoggedIn ? '#19B66B' : '#2F6FB7',
               fontWeight: 800,
-              fontSize: '0.78rem',
+              fontSize: '0.8rem',
+              fontFamily: 'var(--font-sf-display)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              background: session.isLoggedIn ? 'rgba(0, 135, 81, 0.25)' : 'rgba(251, 191, 36, 0.18)',
+              background: '#FFFFFF',
+              border: session.isLoggedIn ? '1.5px solid #19B66B' : '1.5px solid #2F6FB7',
             }}
             title="Runner Account & Sync"
           >
@@ -132,17 +132,18 @@ export function MainMenu({ onPlay }) {
             onClick={() => setShowShop(true)}
             className="glass-panel"
             style={{
-              padding: '8px 14px',
-              border: '1px solid #fbbf24',
-              borderRadius: '10px',
-              color: '#fbbf24',
+              padding: '10px 14px',
+              borderRadius: '12px',
+              color: '#202124',
               fontWeight: 800,
               fontSize: '0.8rem',
+              fontFamily: 'var(--font-sf-display)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              background: 'rgba(251, 191, 36, 0.15)',
+              background: '#FFFFFF',
+              border: '1px solid rgba(0, 0, 0, 0.08)',
             }}
           >
             <span>🛒</span> SHOP
@@ -152,17 +153,18 @@ export function MainMenu({ onPlay }) {
             onClick={() => setShowLeaderboard(true)}
             className="glass-panel"
             style={{
-              padding: '8px 14px',
-              border: '1px solid #10b981',
-              borderRadius: '10px',
-              color: '#34d399',
+              padding: '10px 14px',
+              borderRadius: '12px',
+              color: '#19B66B',
               fontWeight: 800,
               fontSize: '0.8rem',
+              fontFamily: 'var(--font-sf-display)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              background: 'rgba(0, 135, 81, 0.2)',
+              background: '#EAF8F0',
+              border: '1px solid rgba(25, 182, 107, 0.3)',
             }}
           >
             <span>🏆</span> RANKS
@@ -184,10 +186,9 @@ export function MainMenu({ onPlay }) {
         {/* Glowing Totem Mask Crest */}
         <div
           style={{
-            fontSize: '52px',
-            marginBottom: '6px',
-            filter: 'drop-shadow(0 0 20px rgba(0, 135, 81, 0.7))',
-            animation: 'pulse-guardian-glow 3s infinite ease-in-out',
+            fontSize: '54px',
+            marginBottom: '8px',
+            filter: 'drop-shadow(0 4px 16px rgba(25, 182, 107, 0.4))',
           }}
         >
           🎭
@@ -195,15 +196,13 @@ export function MainMenu({ onPlay }) {
 
         <h1
           style={{
-            fontFamily: "'Cinzel', serif",
-            fontSize: 'clamp(2.4rem, 6.5vw, 4rem)',
+            fontFamily: "var(--font-sf-display)",
+            fontSize: 'clamp(2.8rem, 7vw, 4.4rem)',
             fontWeight: 900,
-            letterSpacing: '4px',
+            letterSpacing: '-1px',
             lineHeight: 1.05,
-            background: 'linear-gradient(180deg, #ffffff 0%, #fef08a 60%, #ffb703 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            textShadow: '0 8px 30px rgba(0,0,0,0.8)',
+            color: '#FFFFFF',
+            textShadow: '0 8px 32px rgba(32, 33, 36, 0.6), 0 2px 4px rgba(0,0,0,0.4)',
             marginBottom: '8px',
           }}
         >
@@ -212,17 +211,21 @@ export function MainMenu({ onPlay }) {
 
         <div
           style={{
-            fontFamily: "'Cinzel', serif",
-            fontSize: 'clamp(0.85rem, 2.2vw, 1.15rem)',
-            fontWeight: 700,
-            letterSpacing: '5px',
-            color: '#34d399',
+            fontFamily: "var(--font-sf-text)",
+            fontSize: 'clamp(0.75rem, 2vw, 0.95rem)',
+            fontWeight: 800,
+            letterSpacing: '3px',
+            color: '#19B66B',
+            background: '#FFFFFF',
+            padding: '5px 16px',
+            borderRadius: '999px',
+            display: 'inline-block',
             textTransform: 'uppercase',
-            marginBottom: '24px',
-            textShadow: '0 2px 10px rgba(0,0,0,0.8)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            marginBottom: '26px',
           }}
         >
-          RUN. SURVIVE. ESCAPE.
+          RUN • SURVIVE • ESCAPE
         </div>
 
         {/* Action Buttons */}
@@ -230,7 +233,7 @@ export function MainMenu({ onPlay }) {
           <button
             onClick={handlePlay}
             className="btn-primary"
-            style={{ width: '100%', maxWidth: '280px', fontSize: '1.1rem', padding: '14px 24px' }}
+            style={{ width: '100%', maxWidth: '280px', fontSize: '1.15rem', padding: '16px 28px' }}
           >
             <span>▶</span> PLAY RUN
           </button>
@@ -238,14 +241,11 @@ export function MainMenu({ onPlay }) {
           <div style={{ display: 'flex', gap: '10px', width: '100%', maxWidth: '280px' }}>
             <button
               onClick={() => setShowShop(true)}
-              className="btn-secondary"
+              className="btn-blue"
               style={{
                 flex: 1,
                 padding: '12px',
-                borderColor: '#fbbf24',
-                color: '#fbbf24',
-                background: 'rgba(251, 191, 36, 0.1)',
-                fontSize: '0.85rem',
+                fontSize: '0.88rem',
               }}
             >
               <span>🛒</span> GARAGE
@@ -257,10 +257,7 @@ export function MainMenu({ onPlay }) {
               style={{
                 flex: 1,
                 padding: '12px',
-                borderColor: '#10b981',
-                color: '#34d399',
-                background: 'rgba(16, 185, 129, 0.1)',
-                fontSize: '0.85rem',
+                fontSize: '0.88rem',
               }}
             >
               <span>🏆</span> RANKS
@@ -269,8 +266,21 @@ export function MainMenu({ onPlay }) {
 
           <button
             onClick={() => setShowHowTo(true)}
-            className="btn-secondary"
-            style={{ width: '100%', maxWidth: '280px', fontSize: '0.85rem' }}
+            className="glass-panel"
+            style={{
+              width: '100%',
+              maxWidth: '280px',
+              fontSize: '0.88rem',
+              fontWeight: 800,
+              padding: '12px',
+              cursor: 'pointer',
+              color: '#202124',
+              fontFamily: 'var(--font-sf-text)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+            }}
           >
             <span>📜</span> HOW TO PLAY
           </button>
@@ -282,25 +292,25 @@ export function MainMenu({ onPlay }) {
         style={{
           display: 'flex',
           justifyContent: 'center',
-          gap: '20px',
+          gap: '16px',
           flexWrap: 'wrap',
         }}
       >
         <div
           className="glass-panel"
           style={{
-            padding: '8px 18px',
+            padding: '10px 20px',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
+            gap: '12px',
           }}
         >
-          <span style={{ fontSize: '18px' }}>🏆</span>
+          <span style={{ fontSize: '20px' }}>🏆</span>
           <div>
-            <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#5f6368', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               BEST SCORE
             </div>
-            <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fef08a' }}>
+            <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#2F6FB7', fontFamily: 'var(--font-sf-display)' }}>
               {gameState.highScore.toLocaleString()}
             </div>
           </div>
@@ -309,18 +319,18 @@ export function MainMenu({ onPlay }) {
         <div
           className="glass-panel"
           style={{
-            padding: '8px 18px',
+            padding: '10px 20px',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
+            gap: '12px',
           }}
         >
-          <span style={{ fontSize: '18px' }}>💵</span>
+          <span style={{ fontSize: '20px' }}>💵</span>
           <div>
-            <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#5f6368', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               MOST CASH IN 1 RUN
             </div>
-            <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#34d399' }}>
+            <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#19B66B', fontFamily: 'var(--font-sf-display)' }}>
               ₦{gameState.highCash.toLocaleString()}
             </div>
           </div>

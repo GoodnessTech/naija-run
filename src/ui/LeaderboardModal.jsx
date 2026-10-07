@@ -25,13 +25,13 @@ export function LeaderboardModal({ onClose }) {
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'rgba(5, 12, 8, 0.94)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        background: 'rgba(87, 80, 116, 0.88)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '12px',
+        padding: '16px',
         boxSizing: 'border-box',
       }}
     >
@@ -39,55 +39,70 @@ export function LeaderboardModal({ onClose }) {
         className="glass-panel"
         style={{
           width: '100%',
-          maxWidth: '640px',
+          maxWidth: '620px',
           height: '100%',
           maxHeight: '94dvh',
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: '20px',
-          border: '1.5px solid rgba(212, 175, 55, 0.45)',
-          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+          borderRadius: '24px',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 24px 60px rgba(87, 80, 116, 0.35)',
           overflow: 'hidden',
-          background: 'linear-gradient(180deg, #0e1e14 0%, #08110b 100%)',
+          background: '#FFFFFF',
+          color: '#202124',
+          fontFamily: 'var(--font-sf-text)',
         }}
       >
-        {/* Sticky Mobile Header */}
+        {/* Sticky Header */}
         <div
           style={{
-            padding: '14px 18px',
-            borderBottom: '1px solid rgba(212, 175, 55, 0.25)',
+            padding: '18px 22px',
+            borderBottom: '1px solid #f1f3f4',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: 'rgba(6, 14, 9, 0.92)',
+            background: '#FFFFFF',
             flexShrink: 0,
           }}
         >
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '20px' }}>🏆</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '12px',
+                background: '#EAF8F0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+              }}
+            >
+              🏆
+            </div>
+            <div>
               <h2
                 style={{
                   margin: 0,
-                  fontFamily: "'Cinzel', serif",
-                  fontSize: 'clamp(1.1rem, 3.5vw, 1.35rem)',
-                  fontWeight: 900,
-                  letterSpacing: '1.5px',
-                  color: '#fef08a',
+                  fontFamily: 'var(--font-sf-display)',
+                  fontSize: '1.25rem',
+                  fontWeight: 800,
+                  letterSpacing: '-0.3px',
+                  color: '#202124',
                 }}
               >
-                VERIFIED RUNNERS LEDGER
+                Verified Runners Ledger
               </h2>
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '2px' }}>
-              Authentic record board • Zero simulated competitors
+              <div style={{ fontSize: '0.78rem', color: '#5f6368', marginTop: '2px' }}>
+                Authentic record board • Zero simulated competitors
+              </div>
             </div>
           </div>
 
           <button
             onClick={onClose}
             className="btn-icon"
-            style={{ width: '38px', height: '38px', fontSize: '18px', flexShrink: 0 }}
+            style={{ width: '36px', height: '36px', fontSize: '16px', borderRadius: '50%', flexShrink: 0 }}
             title="Close"
             aria-label="Close Leaderboard"
           >
@@ -99,31 +114,32 @@ export function LeaderboardModal({ onClose }) {
         {!session.isLoggedIn && (
           <div
             style={{
-              padding: '8px 16px',
-              background: 'rgba(251, 191, 36, 0.16)',
-              borderBottom: '1px solid rgba(251, 191, 36, 0.35)',
+              padding: '10px 18px',
+              background: '#EAF8F0',
+              borderBottom: '1px solid #d5f2e1',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              gap: '10px',
+              gap: '12px',
               flexShrink: 0,
             }}
           >
-            <div style={{ fontSize: '0.74rem', color: '#fef08a', lineHeight: 1.3 }}>
-              💡 <strong>Runner Sync:</strong> Sign up with just username & password to register your official runner handle!
+            <div style={{ fontSize: '0.78rem', color: '#19B66B', lineHeight: 1.35, fontWeight: 600 }}>
+              💡 <strong>Runner Sync:</strong> Sign up with just username & password to register your handle!
             </div>
             <button
               onClick={() => setShowAuthModal(true)}
               style={{
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: '1px solid #fbbf24',
-                background: '#d97706',
+                padding: '6px 14px',
+                borderRadius: '10px',
+                border: 'none',
+                background: '#19B66B',
                 color: '#ffffff',
-                fontSize: '0.72rem',
-                fontWeight: 900,
+                fontSize: '0.75rem',
+                fontWeight: 700,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
+                boxShadow: '0 2px 8px rgba(25, 182, 107, 0.3)',
               }}
             >
               SIGN UP
@@ -135,10 +151,10 @@ export function LeaderboardModal({ onClose }) {
         <div
           style={{
             display: 'flex',
-            padding: '8px 12px',
+            padding: '10px 16px',
             gap: '8px',
-            background: 'rgba(0, 0, 0, 0.35)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            background: '#f8f9fa',
+            borderBottom: '1px solid #f1f3f4',
             flexShrink: 0,
           }}
         >
@@ -147,19 +163,20 @@ export function LeaderboardModal({ onClose }) {
             style={{
               flex: 1,
               padding: '10px 8px',
-              minHeight: '44px',
-              borderRadius: '10px',
-              border: mode === LEADERBOARD_MODES.DISTANCE ? '1.5px solid #10b981' : '1px solid rgba(255, 255, 255, 0.1)',
-              background: mode === LEADERBOARD_MODES.DISTANCE ? 'rgba(16, 185, 129, 0.25)' : 'transparent',
-              color: mode === LEADERBOARD_MODES.DISTANCE ? '#34d399' : '#94a3b8',
+              minHeight: '42px',
+              borderRadius: '12px',
+              border: mode === LEADERBOARD_MODES.DISTANCE ? '1.5px solid #19B66B' : '1px solid #e8eaed',
+              background: mode === LEADERBOARD_MODES.DISTANCE ? '#EAF8F0' : '#FFFFFF',
+              color: mode === LEADERBOARD_MODES.DISTANCE ? '#19B66B' : '#5f6368',
               fontWeight: 800,
-              fontSize: 'clamp(0.75rem, 2.5vw, 0.82rem)',
+              fontSize: '0.84rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '6px',
               transition: 'all 0.15s ease',
+              boxShadow: mode === LEADERBOARD_MODES.DISTANCE ? '0 2px 8px rgba(25, 182, 107, 0.15)' : 'none',
             }}
           >
             <span>🏃</span> SPRINT DISTANCE
@@ -170,19 +187,20 @@ export function LeaderboardModal({ onClose }) {
             style={{
               flex: 1,
               padding: '10px 8px',
-              minHeight: '44px',
-              borderRadius: '10px',
-              border: mode === LEADERBOARD_MODES.CASH ? '1.5px solid #fbbf24' : '1px solid rgba(255, 255, 255, 0.1)',
-              background: mode === LEADERBOARD_MODES.CASH ? 'rgba(251, 191, 36, 0.2)' : 'transparent',
-              color: mode === LEADERBOARD_MODES.CASH ? '#fbbf24' : '#94a3b8',
+              minHeight: '42px',
+              borderRadius: '12px',
+              border: mode === LEADERBOARD_MODES.CASH ? '1.5px solid #2F6FB7' : '1px solid #e8eaed',
+              background: mode === LEADERBOARD_MODES.CASH ? '#eef4fb' : '#FFFFFF',
+              color: mode === LEADERBOARD_MODES.CASH ? '#2F6FB7' : '#5f6368',
               fontWeight: 800,
-              fontSize: 'clamp(0.75rem, 2.5vw, 0.82rem)',
+              fontSize: '0.84rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '6px',
               transition: 'all 0.15s ease',
+              boxShadow: mode === LEADERBOARD_MODES.CASH ? '0 2px 8px rgba(47, 111, 183, 0.15)' : 'none',
             }}
           >
             <span>💰</span> SINGLE NAIRA HAUL
@@ -195,10 +213,10 @@ export function LeaderboardModal({ onClose }) {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: '6px 12px',
-            background: 'rgba(0, 0, 0, 0.45)',
+            padding: '8px 16px',
+            background: '#FFFFFF',
             gap: '8px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+            borderBottom: '1px solid #f1f3f4',
             flexShrink: 0,
           }}
         >
@@ -207,18 +225,18 @@ export function LeaderboardModal({ onClose }) {
             style={{
               flex: 1,
               maxWidth: '220px',
-              padding: '6px 10px',
-              borderRadius: '8px',
-              border: viewScope === 'TOP_RUNNERS' ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.1)',
-              background: viewScope === 'TOP_RUNNERS' ? 'rgba(16, 185, 129, 0.22)' : 'transparent',
-              color: viewScope === 'TOP_RUNNERS' ? '#34d399' : '#94a3b8',
-              fontSize: '0.72rem',
-              fontWeight: 800,
+              padding: '7px 12px',
+              borderRadius: '10px',
+              border: viewScope === 'TOP_RUNNERS' ? '1.5px solid #19B66B' : '1px solid #dadce0',
+              background: viewScope === 'TOP_RUNNERS' ? '#EAF8F0' : '#f8f9fa',
+              color: viewScope === 'TOP_RUNNERS' ? '#19B66B' : '#5f6368',
+              fontSize: '0.74rem',
+              fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '5px',
+              gap: '6px',
               transition: 'all 0.12s ease',
             }}
           >
@@ -230,31 +248,31 @@ export function LeaderboardModal({ onClose }) {
             style={{
               flex: 1,
               maxWidth: '220px',
-              padding: '6px 10px',
-              borderRadius: '8px',
-              border: viewScope === 'ALL_RUNS' ? '1px solid #fbbf24' : '1px solid rgba(255, 255, 255, 0.1)',
-              background: viewScope === 'ALL_RUNS' ? 'rgba(251, 191, 36, 0.2)' : 'transparent',
-              color: viewScope === 'ALL_RUNS' ? '#fef08a' : '#94a3b8',
-              fontSize: '0.72rem',
-              fontWeight: 800,
+              padding: '7px 12px',
+              borderRadius: '10px',
+              border: viewScope === 'ALL_RUNS' ? '1.5px solid #2F6FB7' : '1px solid #dadce0',
+              background: viewScope === 'ALL_RUNS' ? '#eef4fb' : '#f8f9fa',
+              color: viewScope === 'ALL_RUNS' ? '#2F6FB7' : '#5f6368',
+              fontSize: '0.74rem',
+              fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '5px',
+              gap: '6px',
               transition: 'all 0.12s ease',
             }}
           >
-            <span>📜</span> ALL RUNS LEDGER ({data.totalRunsRecorded})
+            <span>📜</span> ALL RUNS ({data.totalRunsRecorded})
           </button>
         </div>
 
         {/* Player Standing Card */}
         <div
           style={{
-            padding: '12px 16px',
-            background: 'linear-gradient(135deg, rgba(0, 135, 81, 0.25) 0%, rgba(5, 25, 15, 0.6) 100%)',
-            borderBottom: '1px solid rgba(16, 185, 129, 0.35)',
+            padding: '12px 18px',
+            background: '#EAF8F0',
+            borderBottom: '1px solid #d5f2e1',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -262,44 +280,45 @@ export function LeaderboardModal({ onClose }) {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '24px' }}>{data.currentProfile.avatar}</span>
+            <span style={{ fontSize: '26px' }}>{data.currentProfile.avatar}</span>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f8fafc' }}>
+                <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#202124' }}>
                   {data.currentProfile.username}
                 </span>
                 <span
                   style={{
-                    fontSize: '0.62rem',
-                    color: '#34d399',
-                    background: 'rgba(16, 185, 129, 0.2)',
-                    padding: '1px 6px',
-                    borderRadius: '4px',
-                    fontWeight: 800,
+                    fontSize: '0.64rem',
+                    color: '#19B66B',
+                    background: '#FFFFFF',
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    fontWeight: 700,
+                    border: '1px solid rgba(25, 182, 107, 0.2)',
                   }}
                 >
                   {data.currentProfile.title}
                 </span>
               </div>
-              <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '1px' }}>
+              <div style={{ fontSize: '0.74rem', color: '#5f6368', marginTop: '1px' }}>
                 Career Runs: {data.currentProfile.totalRuns} • Best: {data.currentProfile.bestDistance}m
               </div>
             </div>
           </div>
 
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '0.62rem', color: '#fbbf24', fontWeight: 800, letterSpacing: '0.5px' }}>
-              CURRENT RANK
+            <div style={{ fontSize: '0.64rem', color: '#5f6368', fontWeight: 700, letterSpacing: '0.5px' }}>
+              YOUR RANK
             </div>
             <div
               style={{
-                fontSize: '1.1rem',
+                fontSize: '1.15rem',
                 fontWeight: 900,
-                color: data.playerRank ? '#fef08a' : '#94a3b8',
-                fontFamily: "'Plus Jakarta Sans', monospace",
+                color: data.playerRank ? '#19B66B' : '#5f6368',
+                fontFamily: 'var(--font-sf-display)',
               }}
             >
-              {data.playerRank ? `#${data.playerRank}` : 'NO RUNS YET'}
+              {data.playerRank ? `#${data.playerRank}` : 'NO RUNS'}
             </div>
           </div>
         </div>
@@ -313,6 +332,7 @@ export function LeaderboardModal({ onClose }) {
             display: 'flex',
             flexDirection: 'column',
             gap: '8px',
+            background: '#FFFFFF',
             WebkitOverflowScrolling: 'touch',
           }}
         >
@@ -321,7 +341,7 @@ export function LeaderboardModal({ onClose }) {
               style={{
                 textAlign: 'center',
                 padding: '40px 20px',
-                color: '#94a3b8',
+                color: '#5f6368',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -329,10 +349,10 @@ export function LeaderboardModal({ onClose }) {
               }}
             >
               <div style={{ fontSize: '42px' }}>📜</div>
-              <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 800 }}>
-                HALL OF FAME IS READY
+              <h3 style={{ margin: 0, color: '#202124', fontSize: '1.1rem', fontWeight: 800 }}>
+                Hall of Fame is Ready
               </h3>
-              <p style={{ margin: 0, fontSize: '0.82rem', maxWidth: '380px', lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontSize: '0.84rem', maxWidth: '380px', lineHeight: 1.5 }}>
                 No fake bots or mock rankings. Every score here is verified from real gameplay. Start a run and survive to claim Rank #1!
               </p>
             </div>
@@ -344,16 +364,16 @@ export function LeaderboardModal({ onClose }) {
               const isCurrent = entry.isCurrentProfile;
 
               let rankBadge = `#${entry.rank}`;
-              let rankColor = '#94a3b8';
+              let rankColor = '#5f6368';
               if (isGold) {
                 rankBadge = '🥇 #1';
-                rankColor = '#fbbf24';
+                rankColor = '#d97706';
               } else if (isSilver) {
                 rankBadge = '🥈 #2';
-                rankColor = '#e2e8f0';
+                rankColor = '#475569';
               } else if (isBronze) {
                 rankBadge = '🥉 #3';
-                rankColor = '#f97316';
+                rankColor = '#b45309';
               }
 
               const formattedDate = entry.date
@@ -373,29 +393,29 @@ export function LeaderboardModal({ onClose }) {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '12px 14px',
-                    borderRadius: '12px',
+                    borderRadius: '14px',
                     background: isCurrent
-                      ? 'linear-gradient(135deg, rgba(0, 135, 81, 0.28) 0%, rgba(5, 25, 15, 0.7) 100%)'
+                      ? '#EAF8F0'
                       : isGold
-                      ? 'rgba(251, 191, 36, 0.12)'
-                      : 'rgba(255, 255, 255, 0.03)',
+                      ? '#fffbeb'
+                      : '#f8f9fa',
                     border: isCurrent
-                      ? '1.5px solid #10b981'
+                      ? '1.5px solid #19B66B'
                       : isGold
-                      ? '1.5px solid rgba(251, 191, 36, 0.4)'
-                      : '1px solid rgba(255, 255, 255, 0.08)',
-                    boxShadow: isCurrent ? '0 0 15px rgba(16, 185, 129, 0.25)' : undefined,
+                      ? '1px solid #fde68a'
+                      : '1px solid #f1f3f4',
+                    boxShadow: isCurrent ? '0 2px 10px rgba(25, 182, 107, 0.15)' : undefined,
                   }}
                 >
                   {/* Left: Rank & Info */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
                     <div
                       style={{
-                        minWidth: '40px',
-                        fontWeight: 900,
-                        fontSize: isGold || isSilver || isBronze ? '0.95rem' : '0.85rem',
+                        minWidth: '42px',
+                        fontWeight: 800,
+                        fontSize: isGold || isSilver || isBronze ? '0.92rem' : '0.84rem',
                         color: rankColor,
-                        fontFamily: "'Plus Jakarta Sans', monospace",
+                        fontFamily: 'var(--font-sf-display)',
                       }}
                     >
                       {rankBadge}
@@ -409,7 +429,7 @@ export function LeaderboardModal({ onClose }) {
                           style={{
                             fontWeight: 800,
                             fontSize: '0.88rem',
-                            color: isCurrent ? '#34d399' : '#f8fafc',
+                            color: isCurrent ? '#19B66B' : '#202124',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
@@ -420,11 +440,11 @@ export function LeaderboardModal({ onClose }) {
                         {isCurrent && (
                           <span
                             style={{
-                              background: '#10b981',
-                              color: '#000',
+                              background: '#19B66B',
+                              color: '#ffffff',
                               fontSize: '0.58rem',
-                              fontWeight: 900,
-                              padding: '1px 5px',
+                              fontWeight: 800,
+                              padding: '1px 6px',
                               borderRadius: '4px',
                             }}
                           >
@@ -432,7 +452,7 @@ export function LeaderboardModal({ onClose }) {
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#5f6368', marginTop: '1px' }}>
                         {formattedDate} • {entry.title}
                       </div>
                     </div>
@@ -444,15 +464,15 @@ export function LeaderboardModal({ onClose }) {
                       <div>
                         <div
                           style={{
-                            fontSize: '1rem',
-                            fontWeight: 900,
-                            color: '#34d399',
-                            fontFamily: "'Plus Jakarta Sans', monospace",
+                            fontSize: '1.05rem',
+                            fontWeight: 800,
+                            color: '#19B66B',
+                            fontFamily: 'var(--font-sf-display)',
                           }}
                         >
                           {entry.distance.toLocaleString()}m
                         </div>
-                        <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+                        <div style={{ fontSize: '0.7rem', color: '#5f6368' }}>
                           ₦{entry.cash.toLocaleString()}
                         </div>
                       </div>
@@ -460,15 +480,15 @@ export function LeaderboardModal({ onClose }) {
                       <div>
                         <div
                           style={{
-                            fontSize: '1rem',
-                            fontWeight: 900,
-                            color: '#fbbf24',
-                            fontFamily: "'Plus Jakarta Sans', monospace",
+                            fontSize: '1.05rem',
+                            fontWeight: 800,
+                            color: '#2F6FB7',
+                            fontFamily: 'var(--font-sf-display)',
                           }}
                         >
                           ₦{entry.cash.toLocaleString()}
                         </div>
-                        <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+                        <div style={{ fontSize: '0.7rem', color: '#5f6368' }}>
                           {entry.distance.toLocaleString()}m
                         </div>
                       </div>

@@ -21,31 +21,31 @@ export function LoadingScreen({ onLoaded }) {
         left: 0,
         width: '100%',
         height: '100%',
-        background: 'radial-gradient(circle at center, #0f2916 0%, #060e08 100%)',
+        background: 'radial-gradient(circle at center, #575074 0%, #121019 100%)',
         zIndex: 50,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '24px',
-        color: '#f8fafc',
-        fontFamily: "'Outfit', sans-serif",
+        color: '#FFFFFF',
+        fontFamily: "var(--font-sf-text)",
       }}
     >
       <div style={{ textAlign: 'center', maxWidth: '420px', width: '100%' }}>
         {/* Ancient Nigerian Mask / Title Icon */}
-        <div style={{ fontSize: '48px', marginBottom: '12px', filter: 'drop-shadow(0 0 16px rgba(0, 135, 81, 0.6))' }}>
+        <div style={{ fontSize: '48px', marginBottom: '12px', filter: 'drop-shadow(0 4px 16px rgba(25, 182, 107, 0.4))' }}>
           🌿
         </div>
 
         <h1
           style={{
-            fontFamily: "'Cinzel', serif",
-            fontSize: '2.4rem',
+            fontFamily: "var(--font-sf-display)",
+            fontSize: '2.5rem',
             fontWeight: 900,
-            letterSpacing: '3px',
-            color: '#fef08a',
-            textShadow: '0 4px 18px rgba(0,0,0,0.8), 0 0 25px rgba(255, 183, 3, 0.4)',
+            letterSpacing: '-0.5px',
+            color: '#FFFFFF',
+            textShadow: '0 4px 20px rgba(0,0,0,0.5)',
             marginBottom: '8px',
           }}
         >
@@ -54,26 +54,25 @@ export function LoadingScreen({ onLoaded }) {
 
         <p
           style={{
-            fontSize: '0.9rem',
-            color: '#94a3b8',
+            fontSize: '0.85rem',
+            color: '#EAF8F0',
             letterSpacing: '2px',
             textTransform: 'uppercase',
             marginBottom: '32px',
           }}
         >
-          Loading the Tropical Rainforest...
+          Entering the Tropical Rainforest...
         </p>
 
         {/* Progress Bar Container */}
         <div
           style={{
             width: '100%',
-            height: '10px',
-            background: 'rgba(255, 255, 255, 0.08)',
+            height: '8px',
+            background: 'rgba(255, 255, 255, 0.15)',
             borderRadius: '999px',
             overflow: 'hidden',
-            border: '1px solid rgba(0, 135, 81, 0.4)',
-            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.6)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             marginBottom: '14px',
           }}
         >
@@ -81,10 +80,10 @@ export function LoadingScreen({ onLoaded }) {
             style={{
               width: `${Math.round(progress)}%`,
               height: '100%',
-              background: 'linear-gradient(90deg, #008751 0%, #10b981 50%, #fbbf24 100%)',
+              background: 'linear-gradient(90deg, #19B66B 0%, #2F6FB7 100%)',
               borderRadius: '999px',
               transition: 'width 0.25s ease-out',
-              boxShadow: '0 0 12px rgba(16, 185, 129, 0.8)',
+              boxShadow: '0 0 14px rgba(25, 182, 107, 0.6)',
             }}
           />
         </div>
@@ -93,9 +92,10 @@ export function LoadingScreen({ onLoaded }) {
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            fontSize: '0.8rem',
-            color: '#64748b',
-            fontFamily: "'Plus Jakarta Sans', monospace",
+            fontSize: '0.78rem',
+            color: '#EAF8F0',
+            fontFamily: "var(--font-sf-text)",
+            fontWeight: 700,
           }}
         >
           <span>PREPARING 3D ASSETS</span>
