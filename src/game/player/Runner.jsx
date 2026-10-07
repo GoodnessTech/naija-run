@@ -145,6 +145,7 @@ export function Runner({ onRunnerUpdate }) {
       m.currentLane = newLane;
       gameState.currentLane = newLane;
       m.bankAngle = -dir * 0.45;
+      gameAudio.playTurn(dir);
     }
   };
 
@@ -185,7 +186,9 @@ export function Runner({ onRunnerUpdate }) {
       m.z -= forwardDist;
       gameState.distance += forwardDist;
       gameState.playerZ = m.z;
-      gameState.score += forwardDist * (gameState.scoreMultiplier || 1.0);
+      // Multiply score by 2X pointMultiplier if active!
+      const effectiveMultiplier = (gameState.pointMultiplier || 1) * (gameState.scoreMultiplier || 1.0);
+      gameState.score += forwardDist * effectiveMultiplier;
 
       // Clean run recovery: run cleanly for 120m to recover a strike!
       if (!gameState.isDowned) {
@@ -333,6 +336,27 @@ export function Runner({ onRunnerUpdate }) {
         <ringGeometry args={[0.2, 0.65, 12]} />
         <meshBasicMaterial color="#b9381e" transparent opacity={gameState.isDowned ? 0.75 : 0.35} />
       </mesh>
+
+      {/* Golden Invincibility / Shield Protective Aura */}
+      {(gameState.isInvincible || gameState.remainingShields > 0) && (
+        <mesh position={[0, 1.0, 0]}>
+          <sphereGeometry args={[1.3, 16, 16]} />
+          <meshBasicMaterial
+            color="#fbbf24"
+            transparent
+            opacity={0.3}
+            wireframe
+          />
+        </mesh>
+      )}
+
+      {/* Sango Shades Magnet Electric Aura */}
+      {gameState.magnetTimer > 0 && (
+        <mesh position={[0, 1.0, 0]}>
+          <torusGeometry args={[1.1, 0.06, 8, 16]} />
+          <meshBasicMaterial color="#38bdf8" />
+        </mesh>
+      )}
     </group>
   );
 }

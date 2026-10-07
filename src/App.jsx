@@ -6,6 +6,7 @@ import { MainMenu } from './ui/MainMenu';
 import { HUD } from './ui/HUD';
 import { PauseMenu } from './ui/PauseMenu';
 import { GameOverModal } from './ui/GameOverModal';
+import { ReviveModal } from './ui/ReviveModal';
 import { LoadingScreen } from './ui/LoadingScreen';
 import { ScreenEffects } from './game/effects/ScreenEffects';
 import { DebugOverlay } from './ui/DebugOverlay';
@@ -125,6 +126,13 @@ export default function App() {
             gameState.reset();
             gameState.notify(true);
           }}
+        />
+      )}
+
+      {assetsLoaded && status === GAME_STATUS.REVIVE && (
+        <ReviveModal
+          onReviveSuccess={() => {}}
+          onDecline={() => {}}
         />
       )}
 

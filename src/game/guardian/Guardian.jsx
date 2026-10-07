@@ -52,64 +52,68 @@ export function Guardian() {
       const targetX = gameState.currentLane * 1.8;
       g.x = THREE.MathUtils.lerp(g.x, targetX, dt * 5.0);
 
-      // Heavy lumbering stride
-      g.strideTime += dt * (gameState.speed * 0.45);
-      const heavyBob = Math.sin(g.strideTime * 2) * 0.22;
-      const menacingSway = Math.cos(g.strideTime) * 0.18;
+      // Visually only show Witch behind player after hitting an obstacle (Strike 1 or 2)
+      // When strikes === 0, she lurks far back in shadows
+      const isWitchActive = gameState.strikes >= 1;
+      groupRef.current.visible = isWitchActive;
 
-      groupRef.current.position.set(g.x, heavyBob, targetZ);
+      if (isWitchActive) {
+        // Heavy lumbering stride
+        g.strideTime += dt * (gameState.speed * 0.45);
+        const heavyBob = Math.sin(g.strideTime * 2) * 0.22;
+        const menacingSway = Math.cos(g.strideTime) * 0.18;
 
-      // Dynamically react eye color to strikes: Red on Strike 2 (Right on heels!)
-      if (eyeMaterial) {
-        if (gameState.strikes >= 2) {
-          eyeMaterial.color.set('#ef4444');
-          eyeMaterial.emissive.set('#dc2626');
-          eyeMaterial.emissiveIntensity = 5.5;
-        } else if (gameState.strikes === 1) {
-          eyeMaterial.color.set('#f59e0b');
-          eyeMaterial.emissive.set('#d97706');
-          eyeMaterial.emissiveIntensity = 3.8;
-        } else {
-          eyeMaterial.color.set('#fbbf24');
-          eyeMaterial.emissive.set('#f59e0b');
-          eyeMaterial.emissiveIntensity = 2.5;
+        groupRef.current.position.set(g.x, heavyBob, targetZ);
+
+        // Dynamically react eye color to strikes: Red on Strike 2
+        if (eyeMaterial) {
+          if (gameState.strikes >= 2) {
+            eyeMaterial.color.set('#ef4444');
+            eyeMaterial.emissive.set('#dc2626');
+            eyeMaterial.emissiveIntensity = 6.0;
+          } else {
+            eyeMaterial.color.set('#f59e0b');
+            eyeMaterial.emissive.set('#d97706');
+            eyeMaterial.emissiveIntensity = 4.2;
+          }
+        }
+
+        // Calculate guardian pressure (0 to 1)
+        const pressure = THREE.MathUtils.clamp((18.0 - gameState.guardianDistance) / 15.0, 0, 1.0);
+        gameState.guardianPressure = pressure;
+
+        // Heartbeat audio triggers as guardian gets close
+        if (gameState.guardianDistance < 12.0) {
+          gameAudio.playHeartbeat(pressure);
+        }
+
+        // Supernatural roar when close
+        if (gameState.guardianDistance < 7.0 && Math.random() < 0.003) {
+          gameAudio.playGuardianRoar();
+        }
+
+        // Menacing posture tilt
+        if (innerRef.current) {
+          innerRef.current.rotation.y = Math.PI; // Face running direction (-Z)
+          innerRef.current.rotation.z = menacingSway;
+          innerRef.current.rotation.x = 0.2 + pressure * 0.25;
+        }
+
+        // Catch check!
+        if (gameState.guardianDistance <= 1.3 && !g.lunging) {
+          g.lunging = true;
+          gameAudio.playGuardianRoar();
+          gameAudio.playImpact();
+          gameState.hitObstacle();
         }
       }
-
-      // Calculate guardian pressure (0 to 1)
-      const pressure = THREE.MathUtils.clamp((18.0 - gameState.guardianDistance) / 15.0, 0, 1.0);
-      gameState.guardianPressure = pressure;
-
-      // Heartbeat audio triggers as guardian gets close
-      if (gameState.guardianDistance < 12.0) {
-        gameAudio.playHeartbeat(pressure);
-      }
-
-      // Supernatural roar when close
-      if (gameState.guardianDistance < 7.0 && Math.random() < 0.003) {
-        gameAudio.playGuardianRoar();
-      }
-
-      // Menacing posture tilt
-      if (innerRef.current) {
-        innerRef.current.rotation.y = Math.PI; // Face running direction (-Z)
-        innerRef.current.rotation.z = menacingSway;
-        innerRef.current.rotation.x = 0.2 + pressure * 0.25;
-      }
-
-      // Catch check!
-      if (gameState.guardianDistance <= 1.3 && !g.lunging) {
-        g.lunging = true;
-        gameAudio.playGuardianRoar();
-        gameAudio.playImpact();
-        gameAudio.playGameOver();
-        gameState.gameOver('GUARDIAN_CAUGHT');
-      }
     } else if (gameState.status === GAME_STATUS.GAMEOVER) {
+      groupRef.current.visible = true;
       if (innerRef.current) {
         innerRef.current.rotation.x = 0.4;
       }
     } else {
+      groupRef.current.visible = false;
       groupRef.current.position.set(0, 0, 18);
       g.lunging = false;
     }

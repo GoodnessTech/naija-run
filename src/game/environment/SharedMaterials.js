@@ -106,5 +106,60 @@ export const SHARED_MATS = {
     color: '#04140e',
     roughness: 0.2,
     metalness: 0.8,
+  }),
+  danfoYellow: new THREE.MeshStandardMaterial({
+    color: '#facc15',
+    roughness: 0.4,
+    metalness: 0.2,
+  }),
+  danfoStripe: new THREE.MeshStandardMaterial({
+    color: '#15803d',
+    roughness: 0.5,
+  }),
+  oilDrumBlue: new THREE.MeshStandardMaterial({
+    color: '#0284c7',
+    roughness: 0.55,
+    metalness: 0.6,
+  }),
+  oilDrumRust: new THREE.MeshStandardMaterial({
+    color: '#c2410c',
+    roughness: 0.7,
+    metalness: 0.4,
+  }),
+  tyreBlack: new THREE.MeshStandardMaterial({
+    color: '#1e293b',
+    roughness: 0.9,
+  }),
+  mudPuddle: new THREE.MeshStandardMaterial({
+    color: '#1c130d',
+    roughness: 0.1,
+    metalness: 0.2,
+  }),
+  bronzeBenin: new THREE.MeshStandardMaterial({
+    color: '#b45309',
+    roughness: 0.25,
+    metalness: 0.85,
+  }),
+  goldShimmer: new THREE.MeshStandardMaterial({
+    color: '#fbbf24',
+    emissive: new THREE.Color('#f59e0b'),
+    emissiveIntensity: 0.6,
+    roughness: 0.15,
+    metalness: 0.95,
+  }),
+  coralRed: new THREE.MeshStandardMaterial({
+    color: '#e11d48',
+    emissive: new THREE.Color('#be123c'),
+    emissiveIntensity: 0.5,
+    roughness: 0.2,
+  }),
+  catalystPurple: new THREE.MeshStandardMaterial({
+    color: '#3b0764',
+    emissive: new THREE.Color('#7e22ce'),
+    emissiveIntensity: 0.8,
+    roughness: 0.3,
+  }),
+  lightningCyan: new THREE.MeshBasicMaterial({
+    color: '#22d3ee',
   })
 };

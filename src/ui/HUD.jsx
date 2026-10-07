@@ -42,21 +42,18 @@ export function HUD({ onPause }) {
     gameAudio.setMuted(muted);
   };
 
-  // Guardian danger indicator styling
+  // Guardian danger indicator styling (dies on 2nd hit!)
   const gDist = snapshot.guardianDistance;
   const strikes = snapshot.strikes;
-  let dangerColor = '#10b981';
+  let dangerColor = '#19B66B';
   let dangerStatus = 'SAFE';
 
-  if (strikes >= 2 || gDist < 5.0) {
-    dangerColor = '#ef4444';
-    dangerStatus = 'WITCH ON YOUR HEELS! (2/3)';
-  } else if (strikes === 1 || gDist < 11.0) {
-    dangerColor = '#f59e0b';
-    dangerStatus = 'WITCH ALERTED! (1/3)';
+  if (strikes >= 1 || gDist < 7.0) {
+    dangerColor = '#d92550';
+    dangerStatus = 'WITCH AWAKENED! NEXT HIT KILLS! (1/2)';
   }
 
-  const dangerPercent = Math.max(0, Math.min(100, Math.round(((18.0 - gDist) / 16.0) * 100)));
+  const dangerPercent = Math.max(0, Math.min(100, Math.round(((22.0 - gDist) / 18.0) * 100)));
 
   // Box alert of SAFE and danger status changes only stays for exactly 1 second on screen!
   const [showDangerBox, setShowDangerBox] = useState(true);
@@ -81,22 +78,22 @@ export function HUD({ onPause }) {
         }}
       >
         {/* Left: Distance & Cash stats */}
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           {/* Distance */}
           <div
             className="glass-panel"
             style={{
-              padding: '8px 16px',
+              padding: '8px 14px',
               display: 'flex',
               flexDirection: 'column',
-              minWidth: '95px',
+              minWidth: '90px',
             }}
           >
-            <span style={{ fontSize: '0.65rem', color: '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
+            <span style={{ fontSize: '0.62rem', color: '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
               DISTANCE
             </span>
-            <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#202124', fontFamily: "var(--font-sf-display)" }}>
-              {snapshot.distance} <span style={{ fontSize: '0.75rem', color: '#5f6368' }}>m</span>
+            <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#202124', fontFamily: "var(--font-sf-display)" }}>
+              {snapshot.distance} <span style={{ fontSize: '0.72rem', color: '#5f6368' }}>m</span>
             </span>
           </div>
 
@@ -104,10 +101,10 @@ export function HUD({ onPause }) {
           <div
             className="glass-panel"
             style={{
-              padding: '8px 16px',
+              padding: '8px 14px',
               display: 'flex',
               flexDirection: 'column',
-              minWidth: '125px',
+              minWidth: '115px',
               border: cashPop ? '2px solid #19B66B' : '1px solid rgba(25, 182, 107, 0.35)',
               background: '#EAF8F0',
               transform: cashPop ? 'scale(1.08)' : 'scale(1)',
@@ -115,12 +112,12 @@ export function HUD({ onPause }) {
               boxShadow: cashPop ? '0 4px 20px rgba(25, 182, 107, 0.4)' : undefined,
             }}
           >
-            <span style={{ fontSize: '0.65rem', color: '#19B66B', letterSpacing: '0.8px', fontWeight: 800 }}>
+            <span style={{ fontSize: '0.62rem', color: '#19B66B', letterSpacing: '0.8px', fontWeight: 800 }}>
               NAIRA BALANCE
             </span>
             <span
               style={{
-                fontSize: '1.25rem',
+                fontSize: '1.2rem',
                 fontWeight: 900,
                 color: '#19B66B',
                 fontFamily: "var(--font-sf-display)",
@@ -137,26 +134,88 @@ export function HUD({ onPause }) {
           <div
             className="glass-panel"
             style={{
-              padding: '8px 16px',
+              padding: '8px 14px',
               display: 'flex',
               flexDirection: 'column',
-              minWidth: '100px',
+              minWidth: '95px',
             }}
           >
-            <span style={{ fontSize: '0.65rem', color: '#2F6FB7', letterSpacing: '0.8px', fontWeight: 800 }}>
+            <span style={{ fontSize: '0.62rem', color: '#2F6FB7', letterSpacing: '0.8px', fontWeight: 800 }}>
               SCORE
             </span>
-            <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#2F6FB7', fontFamily: "var(--font-sf-display)" }}>
+            <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#2F6FB7', fontFamily: "var(--font-sf-display)" }}>
               {snapshot.score.toLocaleString()}
             </span>
           </div>
 
-          {/* Active Vehicle Shield (Danfo Bus Perk) */}
+          {/* 2X Multiplier Active Badge */}
+          {snapshot.pointMultiplier > 1 && (
+            <div
+              className="glass-panel"
+              style={{
+                padding: '8px 12px',
+                display: 'flex',
+                flexDirection: 'column',
+                border: '1.5px solid #19B66B',
+                background: '#EAF8F0',
+                boxShadow: '0 4px 16px rgba(25, 182, 107, 0.3)',
+                animation: 'pulse-naira-glow 1s infinite ease-in-out',
+              }}
+            >
+              <span style={{ fontSize: '0.62rem', color: '#19B66B', letterSpacing: '0.8px', fontWeight: 800 }}>
+                MULTIPLIER
+              </span>
+              <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#19B66B', fontFamily: "var(--font-sf-display)" }}>
+                ⚡ {snapshot.pointMultiplier}X ({snapshot.multiplierTimer}s)
+              </span>
+            </div>
+          )}
+
+          {/* Sango Shades Magnet Active */}
+          {snapshot.isMagnetActive && (
+            <div
+              className="glass-panel"
+              style={{
+                padding: '8px 12px',
+                display: 'flex',
+                flexDirection: 'column',
+                border: '1.5px solid #ea580c',
+                background: '#fff7ed',
+              }}
+            >
+              <span style={{ fontSize: '0.62rem', color: '#ea580c', letterSpacing: '0.8px', fontWeight: 800 }}>
+                MAGNET
+              </span>
+              <span style={{ fontSize: '1rem', fontWeight: 900, color: '#ea580c', fontFamily: "var(--font-sf-display)" }}>
+                🕶️ ACTIVE
+              </span>
+            </div>
+          )}
+
+          {/* Speed Level Indicator */}
+          <div
+            className="glass-panel"
+            style={{
+              padding: '8px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              background: '#FFFFFF',
+            }}
+          >
+            <span style={{ fontSize: '0.62rem', color: '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
+              SPEED
+            </span>
+            <span style={{ fontSize: '1.1rem', fontWeight: 900, color: '#202124', fontFamily: "var(--font-sf-display)" }}>
+              {snapshot.speed} <span style={{ fontSize: '0.68rem', color: '#5f6368' }}>m/s</span>
+            </span>
+          </div>
+
+          {/* Active Vehicle Shield (Danfo Bus / Spikes Perk) */}
           {snapshot.remainingShields > 0 && (
             <div
               className="glass-panel"
               style={{
-                padding: '8px 14px',
+                padding: '8px 12px',
                 display: 'flex',
                 flexDirection: 'column',
                 border: '1.5px solid #2F6FB7',
@@ -164,10 +223,10 @@ export function HUD({ onPause }) {
                 boxShadow: '0 4px 14px rgba(47, 111, 183, 0.25)',
               }}
             >
-              <span style={{ fontSize: '0.65rem', color: '#2F6FB7', letterSpacing: '0.8px', fontWeight: 800 }}>
+              <span style={{ fontSize: '0.62rem', color: '#2F6FB7', letterSpacing: '0.8px', fontWeight: 800 }}>
                 SHIELD
               </span>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#2F6FB7', fontFamily: "var(--font-sf-display)" }}>
+              <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#2F6FB7', fontFamily: "var(--font-sf-display)" }}>
                 🛡️ {snapshot.remainingShields}
               </span>
             </div>

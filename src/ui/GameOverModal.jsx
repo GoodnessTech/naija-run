@@ -198,8 +198,30 @@ export function GameOverModal({ onPlayAgain, onMainMenu }) {
 
         {/* Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <button onClick={onPlayAgain} className="btn-primary" style={{ width: '100%', fontSize: '1rem', padding: '14px' }}>
-            <span>↺</span> PLAY AGAIN
+          {(gameState.cash >= 1000 || profile.wallet >= 1000 || gameState.score >= 1500) && (
+            <button
+              onClick={() => {
+                if (gameState.cash >= 1000 || profile.wallet >= 1000) {
+                  gameState.reviveWithNaira();
+                } else {
+                  gameState.reviveWithPoints();
+                }
+              }}
+              className="btn-primary"
+              style={{
+                width: '100%',
+                fontSize: '1rem',
+                padding: '14px',
+                background: '#19B66B',
+                boxShadow: '0 6px 20px rgba(25, 182, 107, 0.4)',
+              }}
+            >
+              <span>✨</span> REVIVE & RESUME RUN (₦1k / 1.5k pts)
+            </button>
+          )}
+
+          <button onClick={onPlayAgain} className="btn-blue" style={{ width: '100%', fontSize: '1rem', padding: '14px' }}>
+            <span>↺</span> NEW RUN
           </button>
 
           <div style={{ display: 'flex', gap: '10px' }}>
