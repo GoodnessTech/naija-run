@@ -1,0 +1,201 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap');
+
+:root {
+  --color-nigerian-green: #008751;
+  --color-green-dark: #07190d;
+  --color-green-glow: #10b981;
+  --color-gold: #ffb703;
+  --color-gold-glow: #fbbf24;
+  --color-laterite: #c84b31;
+  --color-soil-dark: #3a150c;
+  --color-bg-dark: #060b08;
+  --color-text-main: #f8fafc;
+  --color-text-muted: #94a3b8;
+  --font-heading: 'Cinzel', serif;
+  --font-ui: 'Outfit', sans-serif;
+  --font-mono: 'Plus Jakarta Sans', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-bg-dark);
+  font-family: var(--font-ui);
+  color: var(--color-text-main);
+  touch-action: none;
+}
+
+/* Canvas styling */
+.game-canvas-container {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+/* UI Overlays */
+.ui-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-interactive {
+  pointer-events: auto;
+}
+
+/* Glassmorphism cards */
+.glass-panel {
+  background: rgba(8, 20, 13, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 135, 81, 0.35);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 0 16px rgba(16, 185, 129, 0.1);
+  border-radius: 18px;
+}
+
+.glass-panel-danger {
+  background: rgba(30, 8, 8, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(200, 75, 49, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7), inset 0 0 18px rgba(200, 75, 49, 0.2);
+  border-radius: 18px;
+}
+
+/* Nigerian Adventure Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #008751 0%, #05613b 50%, #024227 100%);
+  color: #ffffff;
+  border: 2px solid #34d399;
+  padding: 16px 36px;
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 135, 81, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  background: linear-gradient(135deg, #009d5e 0%, #067245 50%, #034f2f 100%);
+  border-color: #6ee7b7;
+  box-shadow: 0 10px 28px rgba(0, 135, 81, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.btn-secondary {
+  background: rgba(15, 35, 22, 0.6);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 183, 3, 0.4);
+  padding: 12px 28px;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-secondary:hover {
+  background: rgba(25, 55, 35, 0.8);
+  border-color: var(--color-gold);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(10, 25, 16, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+  background: rgba(20, 50, 32, 0.85);
+  border-color: var(--color-gold);
+  transform: scale(1.06);
+}
+
+/* Subtle glow animations */
+@keyframes pulse-guardian-glow {
+  0% { box-shadow: 0 0 15px rgba(220, 38, 38, 0.3); }
+  50% { box-shadow: 0 0 35px rgba(220, 38, 38, 0.8); }
+  100% { box-shadow: 0 0 15px rgba(220, 38, 38, 0.3); }
+}
+
+@keyframes pulse-naira-glow {
+  0% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.4)); }
+  50% { transform: scale(1.05); filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.9)); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.4)); }
+}
+
+/* Vignette for Guardian Danger */
+.guardian-vignette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.3s ease;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-nigerian-green);
+  border-radius: 3px;
+}
