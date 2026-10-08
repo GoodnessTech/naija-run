@@ -162,7 +162,7 @@ export function Runner({ onRunnerUpdate }) {
 
   useEffect(() => {
     const unsubscribe = gameState.subscribe((snap) => {
-      if (snap.status === GAME_STATUS.PLAYING && motion.current.z !== 0 && snap.distance < 2) {
+      if ((snap.status === GAME_STATUS.COUNTDOWN || snap.status === GAME_STATUS.PLAYING) && motion.current.z !== 0 && snap.distance < 2) {
         motion.current.x = 0;
         motion.current.y = 0;
         motion.current.z = 0;
@@ -338,13 +338,13 @@ export function Runner({ onRunnerUpdate }) {
       </mesh>
 
       {/* Golden Invincibility / Shield Protective Aura */}
-      {(gameState.isInvincible || gameState.remainingShields > 0) && (
+      {(gameState.isInvincible || gameState.remainingShields > 0 || gameState.isSpeedBurstActive) && (
         <mesh position={[0, 1.0, 0]}>
-          <sphereGeometry args={[1.3, 16, 16]} />
+          <sphereGeometry args={[1.35, 16, 16]} />
           <meshBasicMaterial
-            color="#fbbf24"
+            color={gameState.isSpeedBurstActive ? "#38bdf8" : "#fbbf24"}
             transparent
-            opacity={0.3}
+            opacity={0.35}
             wireframe
           />
         </mesh>

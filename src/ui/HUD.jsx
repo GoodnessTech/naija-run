@@ -5,7 +5,7 @@ import { gameAudio } from '../game/core/GameAudio';
 export function HUD({ onPause }) {
   const [snapshot, setSnapshot] = useState(gameState.getSnapshot());
   const [showTouchButtons, setShowTouchButtons] = useState(false);
-  const [cashPop, setCashPop] = useState(false);
+  const [nairaPop, setNairaPop] = useState(false);
 
   useEffect(() => {
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
@@ -17,8 +17,8 @@ export function HUD({ onPause }) {
       setSnapshot(snap);
       if (snap.cash > prevCash) {
         prevCash = snap.cash;
-        setCashPop(true);
-        setTimeout(() => setCashPop(false), 280);
+        setNairaPop(true);
+        setTimeout(() => setNairaPop(false), 260);
       }
     });
     return unsubscribe;
@@ -32,43 +32,57 @@ export function HUD({ onPause }) {
           gameState.alertMessage = '';
           gameState.notify(true);
         }
-      }, 1000); // Exactly 1 second
+      }, 1000);
       return () => clearTimeout(bannerTimer);
     }
   }, [snapshot.alertMessage]);
 
   const handleToggleSound = () => {
-    const muted = gameState.toggleMute();
-    gameAudio.setMuted(muted);
+    gameState.toggleSound();
   };
 
-  // Guardian danger indicator styling (dies on 2nd hit!)
+  const handleToggleMusic = () => {
+    gameState.toggleMusic();
+  };
+
+  // Guardian danger styling based on 5 phases and strikes
   const gDist = snapshot.guardianDistance;
   const strikes = snapshot.strikes;
+  const phase = snapshot.chaserPhase || 1;
+  
   let dangerColor = '#19B66B';
-  let dangerStatus = 'SAFE';
+  let dangerStatus = snapshot.chaserPhaseTitle || 'DISTANT THREAT';
 
-  if (strikes >= 1 || gDist < 7.0) {
+  if (strikes >= 2 || phase >= 5) {
     dangerColor = '#d92550';
-    dangerStatus = 'WITCH AWAKENED! NEXT HIT KILLS! (1/2)';
+    dangerStatus = 'PHASE 5: EXTREME DANGER!';
+  } else if (strikes === 1 || phase === 4) {
+    dangerColor = '#ea580c';
+    dangerStatus = 'PHASE 4: AGGRESSIVE PURSUIT (1/2 HIT)';
+  } else if (phase === 3) {
+    dangerColor = '#d97706';
+    dangerStatus = 'PHASE 3: CLOSING IN';
+  } else if (phase === 2) {
+    dangerColor = '#2F6FB7';
+    dangerStatus = 'PHASE 2: LURKING IN SHADOWS';
   }
 
   const dangerPercent = Math.max(0, Math.min(100, Math.round(((22.0 - gDist) / 18.0) * 100)));
 
-  // Box alert of SAFE and danger status changes only stays for exactly 1 second on screen!
+  // Box alert stays for 1 second on status change
   const [showDangerBox, setShowDangerBox] = useState(true);
 
   useEffect(() => {
     setShowDangerBox(true);
     const boxTimer = setTimeout(() => {
       setShowDangerBox(false);
-    }, 1000); // Exactly 1.0 second
+    }, 1000);
     return () => clearTimeout(boxTimer);
   }, [dangerStatus, strikes]);
 
   return (
     <div className="ui-layer" style={{ padding: '16px 20px', justifyContent: 'space-between' }}>
-      {/* Top Header: Distance, Cash, Score & Controls */}
+      {/* Top Header: Distance, Naira, Score & Audio Controls */}
       <div
         style={{
           display: 'flex',
@@ -77,9 +91,9 @@ export function HUD({ onPause }) {
           gap: '12px',
         }}
       >
-        {/* Left: Distance & Cash stats */}
+        {/* Left: Core Gameplay Stats */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          {/* Distance */}
+          {/* DISTANCE */}
           <div
             className="glass-panel"
             style={{
@@ -92,12 +106,12 @@ export function HUD({ onPause }) {
             <span style={{ fontSize: '0.62rem', color: '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
               DISTANCE
             </span>
-            <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#202124', fontFamily: "var(--font-sf-display)" }}>
+            <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#202124', fontFamily: "var(--font-sf-display)" }}>
               {snapshot.distance} <span style={{ fontSize: '0.72rem', color: '#5f6368' }}>m</span>
             </span>
           </div>
 
-          {/* ₦1,000 Cash Balance (with pop animation on pickup) */}
+          {/* NAIRA (Strictly no coins label!) */}
           <div
             className="glass-panel"
             style={{
@@ -105,32 +119,32 @@ export function HUD({ onPause }) {
               display: 'flex',
               flexDirection: 'column',
               minWidth: '115px',
-              border: cashPop ? '2px solid #19B66B' : '1px solid rgba(25, 182, 107, 0.35)',
+              border: nairaPop ? '2px solid #19B66B' : '1px solid rgba(25, 182, 107, 0.35)',
               background: '#EAF8F0',
-              transform: cashPop ? 'scale(1.08)' : 'scale(1)',
+              transform: nairaPop ? 'scale(1.08)' : 'scale(1)',
               transition: 'transform 0.15s ease, border-color 0.15s ease',
-              boxShadow: cashPop ? '0 4px 20px rgba(25, 182, 107, 0.4)' : undefined,
+              boxShadow: nairaPop ? '0 4px 20px rgba(25, 182, 107, 0.4)' : undefined,
             }}
           >
             <span style={{ fontSize: '0.62rem', color: '#19B66B', letterSpacing: '0.8px', fontWeight: 800 }}>
-              NAIRA BALANCE
+              NAIRA
             </span>
             <span
               style={{
-                fontSize: '1.2rem',
+                fontSize: '1.25rem',
                 fontWeight: 900,
                 color: '#19B66B',
                 fontFamily: "var(--font-sf-display)",
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '3px',
               }}
             >
               <span>₦</span>{snapshot.cash.toLocaleString()}
             </span>
           </div>
 
-          {/* Total Score */}
+          {/* SCORE */}
           <div
             className="glass-panel"
             style={{
@@ -143,13 +157,13 @@ export function HUD({ onPause }) {
             <span style={{ fontSize: '0.62rem', color: '#2F6FB7', letterSpacing: '0.8px', fontWeight: 800 }}>
               SCORE
             </span>
-            <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#2F6FB7', fontFamily: "var(--font-sf-display)" }}>
+            <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#2F6FB7', fontFamily: "var(--font-sf-display)" }}>
               {snapshot.score.toLocaleString()}
             </span>
           </div>
 
-          {/* 2X Multiplier Active Badge */}
-          {snapshot.pointMultiplier > 1 && (
+          {/* NAIRA STREAK BADGE */}
+          {snapshot.nairaStreak >= 3 && (
             <div
               className="glass-panel"
               style={{
@@ -158,41 +172,20 @@ export function HUD({ onPause }) {
                 flexDirection: 'column',
                 border: '1.5px solid #19B66B',
                 background: '#EAF8F0',
-                boxShadow: '0 4px 16px rgba(25, 182, 107, 0.3)',
-                animation: 'pulse-naira-glow 1s infinite ease-in-out',
+                boxShadow: '0 4px 16px rgba(25, 182, 107, 0.35)',
+                animation: 'pulse-naira-glow 0.8s infinite ease-in-out',
               }}
             >
               <span style={{ fontSize: '0.62rem', color: '#19B66B', letterSpacing: '0.8px', fontWeight: 800 }}>
-                MULTIPLIER
+                STREAK
               </span>
               <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#19B66B', fontFamily: "var(--font-sf-display)" }}>
-                ⚡ {snapshot.pointMultiplier}X ({snapshot.multiplierTimer}s)
+                🔥 x{snapshot.nairaStreak}
               </span>
             </div>
           )}
 
-          {/* Sango Shades Magnet Active */}
-          {snapshot.isMagnetActive && (
-            <div
-              className="glass-panel"
-              style={{
-                padding: '8px 12px',
-                display: 'flex',
-                flexDirection: 'column',
-                border: '1.5px solid #ea580c',
-                background: '#fff7ed',
-              }}
-            >
-              <span style={{ fontSize: '0.62rem', color: '#ea580c', letterSpacing: '0.8px', fontWeight: 800 }}>
-                MAGNET
-              </span>
-              <span style={{ fontSize: '1rem', fontWeight: 900, color: '#ea580c', fontFamily: "var(--font-sf-display)" }}>
-                🕶️ ACTIVE
-              </span>
-            </div>
-          )}
-
-          {/* Speed Level Indicator */}
+          {/* SPEED */}
           <div
             className="glass-panel"
             style={{
@@ -205,12 +198,51 @@ export function HUD({ onPause }) {
             <span style={{ fontSize: '0.62rem', color: '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
               SPEED
             </span>
-            <span style={{ fontSize: '1.1rem', fontWeight: 900, color: '#202124', fontFamily: "var(--font-sf-display)" }}>
+            <span style={{ fontSize: '1.15rem', fontWeight: 900, color: snapshot.isSpeedBurstActive ? '#38bdf8' : '#202124', fontFamily: "var(--font-sf-display)" }}>
               {snapshot.speed} <span style={{ fontSize: '0.68rem', color: '#5f6368' }}>m/s</span>
             </span>
           </div>
 
-          {/* Active Vehicle Shield (Danfo Bus / Spikes Perk) */}
+          {/* ZONE / BIOME BADGE */}
+          <div
+            className="glass-panel"
+            style={{
+              padding: '8px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              background: '#FFFFFF',
+            }}
+          >
+            <span style={{ fontSize: '0.62rem', color: '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
+              ZONE
+            </span>
+            <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#575074', fontFamily: "var(--font-sf-display)" }}>
+              {snapshot.biomeDisplayName}
+            </span>
+          </div>
+
+          {/* 2X MULTIPLIER ACTIVE */}
+          {snapshot.pointMultiplier > 1 && (
+            <div
+              className="glass-panel"
+              style={{
+                padding: '8px 12px',
+                display: 'flex',
+                flexDirection: 'column',
+                border: '1.5px solid #19B66B',
+                background: '#EAF8F0',
+              }}
+            >
+              <span style={{ fontSize: '0.62rem', color: '#19B66B', letterSpacing: '0.8px', fontWeight: 800 }}>
+                MULTIPLIER
+              </span>
+              <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#19B66B', fontFamily: "var(--font-sf-display)" }}>
+                ⚡ {snapshot.pointMultiplier}X ({snapshot.multiplierTimer}s)
+              </span>
+            </div>
+          )}
+
+          {/* ACTIVE SHIELD */}
           {snapshot.remainingShields > 0 && (
             <div
               className="glass-panel"
@@ -220,7 +252,6 @@ export function HUD({ onPause }) {
                 flexDirection: 'column',
                 border: '1.5px solid #2F6FB7',
                 background: '#FFFFFF',
-                boxShadow: '0 4px 14px rgba(47, 111, 183, 0.25)',
               }}
             >
               <span style={{ fontSize: '0.62rem', color: '#2F6FB7', letterSpacing: '0.8px', fontWeight: 800 }}>
@@ -233,15 +264,26 @@ export function HUD({ onPause }) {
           )}
         </div>
 
-        {/* Right: Sound & Pause */}
+        {/* Right: Audio Toggles & Pause Button */}
         <div style={{ display: 'flex', gap: '8px' }} className="ui-interactive">
+          <button
+            onClick={handleToggleMusic}
+            className="btn-icon"
+            title={snapshot.isMusicOn ? 'Mute Music' : 'Enable Music'}
+            aria-label="Toggle Music"
+            style={{ color: snapshot.isMusicOn ? '#19B66B' : '#5f6368' }}
+          >
+            {snapshot.isMusicOn ? '🎵' : '🔇'}
+          </button>
+
           <button
             onClick={handleToggleSound}
             className="btn-icon"
-            title={snapshot.isMuted ? 'Unmute' : 'Mute'}
-            aria-label="Sound"
+            title={snapshot.isSoundOn ? 'Mute Sound FX' : 'Enable Sound FX'}
+            aria-label="Toggle Sound"
+            style={{ color: snapshot.isSoundOn ? '#19B66B' : '#5f6368' }}
           >
-            {snapshot.isMuted ? '🔇' : '🔊'}
+            {snapshot.isSoundOn ? '🔊' : '🔈'}
           </button>
 
           <button
@@ -255,30 +297,31 @@ export function HUD({ onPause }) {
         </div>
       </div>
 
-      {/* Center Strike Alert Banner (When Hit / Witch Attention) */}
+      {/* Center Alert Banner (Near Miss, Streaks, Speed Surges, Chaos Events) */}
       {snapshot.alertMessage && (
         <div
           style={{
             alignSelf: 'center',
             background: strikes >= 2 ? '#FFF0F3' : '#FFFFFF',
-            border: strikes >= 2 ? '2px solid #d92550' : '2px solid #2F6FB7',
+            border: strikes >= 2 ? '2px solid #d92550' : '2px solid #19B66B',
             borderRadius: '16px',
             padding: '12px 28px',
             color: strikes >= 2 ? '#d92550' : '#202124',
             fontWeight: 800,
-            fontSize: '1rem',
+            fontSize: '1.05rem',
             fontFamily: "var(--font-sf-display)",
             letterSpacing: '0.5px',
             boxShadow: '0 12px 36px rgba(87, 80, 116, 0.35)',
             textAlign: 'center',
             maxWidth: '90%',
+            animation: 'countdown-pop 0.3s ease',
           }}
         >
           {snapshot.alertMessage}
         </div>
       )}
 
-      {/* Witch / Guardian Danger Gauge Box Alert - Only stays for 1 second! */}
+      {/* Chaser Danger Box Gauge - Stays for 1 second on status change */}
       <div
         style={{
           alignSelf: 'center',
@@ -297,9 +340,9 @@ export function HUD({ onPause }) {
           className="glass-panel"
           style={{
             padding: '8px 14px',
-            border: strikes >= 2 ? '1.5px solid #d92550' : strikes === 1 ? '1.5px solid #2F6FB7' : '1px solid rgba(0, 0, 0, 0.08)',
+            border: `1.5px solid ${dangerColor}`,
             background: strikes >= 2 ? '#FFF0F3' : '#FFFFFF',
-            boxShadow: strikes >= 2 ? '0 8px 24px rgba(217, 37, 80, 0.2)' : '0 8px 24px rgba(32, 33, 36, 0.08)',
+            boxShadow: '0 8px 24px rgba(32, 33, 36, 0.08)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
@@ -308,21 +351,21 @@ export function HUD({ onPause }) {
                 fontSize: '0.72rem',
                 fontWeight: 800,
                 letterSpacing: '0.5px',
-                color: strikes >= 2 ? '#d92550' : strikes === 1 ? '#2F6FB7' : '#19B66B',
+                color: dangerColor,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
                 fontFamily: "var(--font-sf-text)",
               }}
             >
-              <span>{strikes >= 2 ? '👹' : strikes === 1 ? '⚠️' : '🌲'}</span>
+              <span>{phase >= 4 ? '👹' : phase === 3 ? '⚠️' : '🌲'}</span>
               <span>{dangerStatus}</span>
             </span>
             <span
               style={{
                 fontSize: '0.75rem',
                 fontWeight: 900,
-                color: strikes >= 2 ? '#d92550' : strikes === 1 ? '#2F6FB7' : '#19B66B',
+                color: dangerColor,
                 fontFamily: "var(--font-sf-display)",
               }}
             >
@@ -343,7 +386,7 @@ export function HUD({ onPause }) {
               style={{
                 width: `${dangerPercent}%`,
                 height: '100%',
-                background: strikes >= 2 ? '#d92550' : strikes === 1 ? '#2F6FB7' : '#19B66B',
+                background: dangerColor,
                 borderRadius: '999px',
                 transition: 'width 0.2s ease, background 0.3s ease',
               }}
@@ -352,7 +395,7 @@ export function HUD({ onPause }) {
         </div>
       </div>
 
-      {/* Bottom Bar: Touch screen control buttons */}
+      {/* Mobile Controls */}
       {showTouchButtons && (
         <div
           className="ui-interactive"

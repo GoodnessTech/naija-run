@@ -5,6 +5,7 @@ import { gameAudio } from './GameAudio.js';
 export const GAME_STATUS = {
   LOADING: 'LOADING',
   MENU: 'MENU',
+  COUNTDOWN: 'COUNTDOWN',
   PLAYING: 'PLAYING',
   PAUSED: 'PAUSED',
   REVIVE: 'REVIVE',
@@ -27,13 +28,21 @@ export const PLAYER_STATE = {
   DEAD: 'DEAD'
 };
 
+export const BIOMES = {
+  LAGOS_OUTSKIRTS: 'LAGOS_OUTSKIRTS',
+  BUSY_LAGOS_ROAD: 'BUSY_LAGOS_ROAD',
+  MARKET_AREA: 'MARKET_AREA',
+  DARK_FOREST: 'DARK_FOREST',
+  NIGHT_RUN: 'NIGHT_RUN',
+  DANGER_AREA: 'DANGER_AREA'
+};
+
 class GameStateManager {
   constructor() {
     this.listeners = new Set();
     const hasStorage = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
     this.highScore = hasStorage ? parseInt(localStorage.getItem('naija_run_highscore') || '0', 10) : 0;
     this.highCash = hasStorage ? parseInt(localStorage.getItem('naija_run_highcash') || '0', 10) : 0;
-    this.isMuted = hasStorage ? localStorage.getItem('naija_run_muted') === 'true' : false;
     this.debugMode = false;
     this.remainingShields = 0;
     this.cashBonusMultiplier = 1.0;
@@ -44,36 +53,60 @@ class GameStateManager {
 
   reset() {
     this.status = GAME_STATUS.MENU;
+    this.countdownValue = 3;
+    this.countdownTimer = 0;
     this.distance = 0;
-    this.speed = 16.0;
-    this.targetSpeed = 16.0;
+    
+    // Starting speed is fast and energetic immediately
+    this.baseStartSpeed = 21.0;
+    this.speed = this.baseStartSpeed;
+    this.targetSpeed = this.baseStartSpeed;
     this.cash = 0;
     this.score = 0;
-    this.pointMultiplier = 1; // 2X powerup multiplier
+    this.pointMultiplier = 1;
     this.multiplierTimer = 0;
-    this.magnetTimer = 0; // Sango Shades coin magnet timer
+    this.magnetTimer = 0;
+    this.speedBurstTimer = 0;
+    this.isSpeedBurstActive = false;
+
+    // Naira Streak System
+    this.nairaStreak = 0;
+    this.lastNairaTime = 0;
+
+    // Chaser Tension System (5 Phases)
     this.guardianDistance = 22.0;
     this.guardianPressure = 0.0;
+    this.chaserPhase = 1;
+
+    // Lanes and Player State
     this.currentLane = LANE.CENTER;
     this.targetLane = LANE.CENTER;
     this.playerState = PLAYER_STATE.RUNNING;
     this.playerX = 0;
     this.playerY = 0;
     this.playerZ = 0;
-    this.strikes = 0; // 0: Safe (witch hidden), 1: Witch behind (alerted), 2: Dead (dies on 2nd hit!)
+    this.strikes = 0;
     this.isDowned = false;
     this.downedTimer = 0;
     this.isInvincible = false;
     this.invincibleTimer = 0;
     this.cleanRunDistance = 0;
+    
+    // Near Miss and Alert feedback
     this.alertMessage = '';
     this.alertTimer = 0;
+    this.nearMissCount = 0;
     this.fps = 60;
     this.lastNotifyTime = 0;
     this.last100mThreshold = 0;
     this.last500mAmbushThreshold = 0;
-    this.activeFrontWitches = []; // Array of { id, lane, z }
+    this.activeFrontWitches = [];
     this.reviveCountdown = 0;
+
+    // Chaos Events
+    this.activeChaosEvent = null;
+    this.chaosEventTimer = 0;
+    this.lastChaosThreshold = 0;
   }
 
   subscribe(listener) {
@@ -92,35 +125,105 @@ class GameStateManager {
     }
   }
 
+  // 6 Distinct Environmental Zones
   getCurrentBiome() {
-    const dist = this.distance % 1600;
-    if (dist < 380) return 'RAINFOREST';
-    if (dist < 780) return 'BENIN_SHRINE';
-    if (dist < 1180) return 'LAGOS_HIGHWAY';
-    return 'CLOUD_CHASM';
+    const dist = this.distance % 3600;
+    if (dist < 400) return BIOMES.LAGOS_OUTSKIRTS;
+    if (dist < 900) return BIOMES.BUSY_LAGOS_ROAD;
+    if (dist < 1500) return BIOMES.MARKET_AREA;
+    if (dist < 2200) return BIOMES.DARK_FOREST;
+    if (dist < 3000) return BIOMES.NIGHT_RUN;
+    return BIOMES.DANGER_AREA;
+  }
+
+  getBiomeDisplayName() {
+    const biome = this.getCurrentBiome();
+    switch (biome) {
+      case BIOMES.LAGOS_OUTSKIRTS: return 'LAGOS OUTSKIRTS';
+      case BIOMES.BUSY_LAGOS_ROAD: return 'BUSY LAGOS ROAD';
+      case BIOMES.MARKET_AREA: return 'MARKET AREA';
+      case BIOMES.DARK_FOREST: return 'DARK FOREST';
+      case BIOMES.NIGHT_RUN: return 'NIGHT RUN';
+      case BIOMES.DANGER_AREA: return 'HIGH-SPEED DANGER AREA';
+      default: return 'LAGOS OUTSKIRTS';
+    }
+  }
+
+  // Chaser 5-Phase Determination
+  updateChaserPhase() {
+    const d = this.guardianDistance;
+    if (d > 16.0) this.chaserPhase = 1;
+    else if (d > 12.0) this.chaserPhase = 2;
+    else if (d > 8.0) this.chaserPhase = 3;
+    else if (d > 4.0) this.chaserPhase = 4;
+    else this.chaserPhase = 5;
+  }
+
+  getChaserPhaseTitle() {
+    switch (this.chaserPhase) {
+      case 1: return 'DISTANT THREAT';
+      case 2: return 'LURKING IN SHADOWS';
+      case 3: return 'CLOSING IN';
+      case 4: return 'AGGRESSIVE PURSUIT';
+      case 5: return 'EXTREME DANGER!';
+      default: return 'DISTANT THREAT';
+    }
+  }
+
+  // Smooth progressive speed progression curve
+  calculateTargetSpeed() {
+    const dist = this.distance;
+    // 0-500m (Start): 21.0 -> 24.5 m/s
+    // 500-1500m (Mid): 24.5 -> 29.0 m/s
+    // 1500-3000m (Late): 29.0 -> 34.0 m/s
+    // 3000m+ (Extreme): 34.0 -> 38.0+ m/s
+    let calculated = this.baseStartSpeed;
+    if (dist <= 500) {
+      calculated = 21.0 + (dist / 500) * 3.5;
+    } else if (dist <= 1500) {
+      calculated = 24.5 + ((dist - 500) / 1000) * 4.5;
+    } else if (dist <= 3000) {
+      calculated = 29.0 + ((dist - 1500) / 1500) * 5.0;
+    } else {
+      calculated = 34.0 + Math.min(6.0, ((dist - 3000) / 1500) * 4.0);
+    }
+
+    if (this.isSpeedBurstActive) {
+      calculated += 6.5; // Supersonic burst boost!
+    }
+
+    return calculated;
   }
 
   getSnapshot() {
+    this.updateChaserPhase();
     return {
       status: this.status,
+      countdownValue: this.countdownValue,
       distance: Math.floor(this.distance),
       speed: Math.round(this.speed * 10) / 10,
       cash: this.cash,
       score: Math.floor(this.score),
       highScore: this.highScore,
       highCash: this.highCash,
+      nairaStreak: this.nairaStreak,
       guardianDistance: Math.max(0, Math.round(this.guardianDistance * 10) / 10),
       guardianPressure: this.guardianPressure,
+      chaserPhase: this.chaserPhase,
+      chaserPhaseTitle: this.getChaserPhaseTitle(),
       playerState: this.playerState,
       currentLane: this.currentLane,
       strikes: this.strikes,
       isDowned: this.isDowned,
-      isInvincible: this.isInvincible,
+      isInvincible: this.isInvincible || this.isSpeedBurstActive,
+      isSpeedBurstActive: this.isSpeedBurstActive,
       pointMultiplier: this.pointMultiplier,
       multiplierTimer: Math.ceil(this.multiplierTimer),
       isMagnetActive: this.magnetTimer > 0,
       alertMessage: this.alertMessage,
-      isMuted: this.isMuted,
+      isMuted: !gameAudio.isSoundOn,
+      isMusicOn: gameAudio.isMusicOn,
+      isSoundOn: gameAudio.isSoundOn,
       debugMode: this.debugMode,
       fps: this.fps,
       remainingShields: this.remainingShields || 0,
@@ -128,29 +231,45 @@ class GameStateManager {
       canReviveNaira: this.cash >= 1000 || userProfile.getSnapshot().wallet >= 1000,
       canRevivePoints: this.score >= 1500,
       currentBiome: this.getCurrentBiome(),
+      biomeDisplayName: this.getBiomeDisplayName(),
       speedLevel: Math.floor(this.distance / 100) + 1,
-      lastRunResult: this.lastRunResult
+      lastRunResult: this.lastRunResult,
+      activeChaosEvent: this.activeChaosEvent
     };
   }
 
-  startGame() {
+  // Start sequence with high energy 3 -> 2 -> 1 -> GO!
+  startCountdown() {
     this.reset();
+    gameAudio.resumeContext();
     const perks = userProfile.getActivePerks();
     this.guardianDistance = 22.0 + (perks.guardianStartDistanceBonus || 0);
-    this.speed = 16.0 + (perks.speedBonus || 0);
-    this.targetSpeed = this.speed;
+    this.baseStartSpeed = 21.0 + (perks.speedBonus || 0);
+    this.speed = this.baseStartSpeed;
+    this.targetSpeed = this.baseStartSpeed;
     this.remainingShields = perks.shieldCount || 0;
     this.cashBonusMultiplier = 1.0 + (perks.cashBonusPercent || 0);
     this.scoreMultiplier = perks.scoreMultiplier || 1.0;
     this.lastRunResult = null;
 
+    this.status = GAME_STATUS.COUNTDOWN;
+    this.countdownValue = 3;
+    this.countdownTimer = 0.65; // ~0.65s per tick
+    gameAudio.playCountdownTick(3);
+    this.notify(true);
+  }
+
+  startGame() {
     this.status = GAME_STATUS.PLAYING;
+    this.playerState = PLAYER_STATE.RUNNING;
+    gameAudio.startMusic('GAMEPLAY');
     this.notify(true);
   }
 
   pauseGame() {
     if (this.status === GAME_STATUS.PLAYING) {
       this.status = GAME_STATUS.PAUSED;
+      gameAudio.setMusicState('MENU');
       this.notify(true);
     }
   }
@@ -158,47 +277,107 @@ class GameStateManager {
   resumeGame() {
     if (this.status === GAME_STATUS.PAUSED) {
       this.status = GAME_STATUS.PLAYING;
+      gameAudio.setMusicState(this.speed > 28.0 ? 'HIGHSPEED' : 'GAMEPLAY');
       this.notify(true);
     }
   }
 
-  // 100m Speed increase check
+  // 100m Speed increase milestone check
   checkSpeedProgression() {
     const current100m = Math.floor(this.distance / 100);
     if (current100m > this.last100mThreshold && current100m > 0) {
       this.last100mThreshold = current100m;
-      // Increase speed by 0.85 m/s every 100m (cap at 32 m/s)
-      this.speed = Math.min(32.0, this.speed + 0.85);
-      this.targetSpeed = this.speed;
       this.alertMessage = `⚡ SPEED SURGE! ${(this.speed).toFixed(1)} m/s (+${current100m * 100}m)`;
       this.alertTimer = 1.0;
       gameAudio.playSpeedUp();
+      
+      // Scale music intensity if speed crosses 28 m/s
+      if (this.speed > 28.0) {
+        gameAudio.setMusicState('HIGHSPEED');
+      }
       this.notify(true);
     }
   }
 
-  // 500m Front Witch Ambush check
+  // Rare Chaos Events System (Every ~350-500m)
+  checkChaosEvents() {
+    const currentEventThreshold = Math.floor(this.distance / 420);
+    if (currentEventThreshold > this.lastChaosThreshold && currentEventThreshold > 0) {
+      this.lastChaosThreshold = currentEventThreshold;
+      if (Math.random() < 0.65 && !this.activeChaosEvent) {
+        const events = ['SPEED_BURST', 'MONEY_RAIN', 'CHASER_SURGE', 'WITCH_SWARM'];
+        const chosen = events[Math.floor(Math.random() * events.length)];
+        this.triggerChaosEvent(chosen);
+      }
+    }
+  }
+
+  triggerChaosEvent(type) {
+    if (type === 'SPEED_BURST') {
+      this.activateSpeedBurst(5.0);
+    } else if (type === 'MONEY_RAIN') {
+      this.activeChaosEvent = { type: 'MONEY_RAIN', name: '💸 NAIRA SHOWER! CASH OVERFLOW!', timer: 8.0 };
+      this.alertMessage = '💸 NAIRA SHOWER! CASH OVERFLOW!';
+      this.alertTimer = 1.2;
+      gameAudio.playChaosEvent();
+    } else if (type === 'CHASER_SURGE') {
+      this.guardianDistance = Math.max(6.0, this.guardianDistance - 5.0);
+      this.activeChaosEvent = { type: 'CHASER_SURGE', name: '⚠️ CHASER SURGE! SHE IS CLOSING IN!', timer: 6.0 };
+      this.alertMessage = '⚠️ CHASER SURGE! SHE IS CLOSING IN!';
+      this.alertTimer = 1.2;
+      gameAudio.playWitchShriek();
+    } else if (type === 'WITCH_SWARM') {
+      this.activeChaosEvent = { type: 'WITCH_SWARM', name: '👹 WITCH SHADOWS GATHER!', timer: 7.0 };
+      this.alertMessage = '👹 WITCH SHADOWS GATHER!';
+      this.alertTimer = 1.2;
+      gameAudio.playWitchShriek();
+    }
+    this.notify(true);
+  }
+
+  // Speed Burst powerup / mechanic
+  activateSpeedBurst(duration = 5.0) {
+    this.isSpeedBurstActive = true;
+    this.speedBurstTimer = duration;
+    this.isInvincible = true;
+    this.alertMessage = '⚡ HYPER SPEED BURST! 2X SCORE!';
+    this.alertTimer = 1.2;
+    gameAudio.playSpeedBurst();
+    this.notify(true);
+  }
+
+  // Near-Miss Mechanic: Razor close obstacle dodge (+150 PTS bonus)
+  triggerNearMiss(obstacleType = 'HAZARD') {
+    if (this.status !== GAME_STATUS.PLAYING || this.isDowned) return;
+    this.nearMissCount++;
+    const bonusPts = Math.round(150 * (this.pointMultiplier || 1) * (this.scoreMultiplier || 1.0));
+    this.score += bonusPts;
+    this.alertMessage = `⚡ NEAR MISS! +${bonusPts} PTS!`;
+    this.alertTimer = 0.9;
+    gameAudio.playNearMiss();
+    this.notify(true);
+  }
+
+  // 500m Front Witch Ambush
   check500mAmbush() {
     const current500m = Math.floor(this.distance / 500);
     if (current500m > this.last500mAmbushThreshold && current500m > 0) {
       this.last500mAmbushThreshold = current500m;
-      // Spawn Front Witch ambush 42 meters ahead of runner
-      const randomLane = Math.floor(Math.random() * 3) - 1; // -1, 0, 1
+      const randomLane = Math.floor(Math.random() * 3) - 1;
       const witchId = `fw_${current500m}_${Date.now()}`;
       this.activeFrontWitches.push({
         id: witchId,
         lane: randomLane,
-        z: this.playerZ - 42.0,
+        z: this.playerZ - 45.0,
       });
 
-      this.alertMessage = `👹 WITCH AMBUSH AHEAD! DODGE ${randomLane === -1 ? 'LEFT' : randomLane === 1 ? 'RIGHT' : 'LANE'}!`;
+      this.alertMessage = `👹 WITCH AMBUSH AHEAD! DODGE ${randomLane === -1 ? 'LEFT' : randomLane === 1 ? 'RIGHT' : 'CENTER'}!`;
       this.alertTimer = 1.2;
       gameAudio.playWitchShriek();
       this.notify(true);
     }
   }
 
-  // 2X Point Multiplier collection
   activateMultiplier(multiplier = 2, duration = 15) {
     this.pointMultiplier = multiplier;
     this.multiplierTimer = duration;
@@ -208,7 +387,6 @@ class GameStateManager {
     this.notify(true);
   }
 
-  // Cultural Valuable Pickups (Coral Beads, Golden Spikes, Sango Shades, Royal Agbada)
   collectValuable(type) {
     if (type === 'CORAL_BEADS') {
       this.cash += Math.round(5000 * (this.cashBonusMultiplier || 1.0));
@@ -219,19 +397,18 @@ class GameStateManager {
       this.cash += Math.round(2000 * (this.cashBonusMultiplier || 1.0));
       this.alertMessage = '👟 GOLDEN SPIKES! +1 SHIELD ACTIVE!';
     } else if (type === 'SANGO_SHADES') {
-      this.magnetTimer = 12.0; // 12 seconds coin magnet
-      this.alertMessage = '🕶️ SANGO SHADES! COIN MAGNET ON (12s)!';
+      this.magnetTimer = 12.0;
+      this.alertMessage = '🕶️ SANGO SHADES! NAIRA MAGNET (12s)!';
     } else if (type === 'ROYAL_AGBADA') {
       this.cash += Math.round(10000 * (this.cashBonusMultiplier || 1.0));
       this.score += Math.round(1000 * this.pointMultiplier * (this.scoreMultiplier || 1.0));
-      this.alertMessage = '✨ ROYAL AGBADA! +₦10,000 MEGA CASH!';
+      this.alertMessage = '✨ ROYAL AGBADA! +₦10,000 MEGA NAIRA!';
     }
     this.alertTimer = 1.2;
     gameAudio.playValuablePickup();
     this.notify(true);
   }
 
-  // Point Catalyst Trap (-100 PTS)
   triggerPointCatalyst(penalty = 100) {
     this.score = Math.max(0, this.score - penalty);
     this.alertMessage = `⚠️ CURSED FETISH TRAP! -${penalty} PTS!`;
@@ -240,65 +417,93 @@ class GameStateManager {
     this.notify(true);
   }
 
-  // Increases Naira balance by ₦1,000 per note hit (with active lifestyle multiplier)
-  collectCash(amount = 1000) {
+  // Naira Collection with Denominations and Streaks
+  collectNaira(amount = 100, isRisky = false) {
     const effectiveCash = Math.round(amount * (this.cashBonusMultiplier || 1.0));
     this.cash += effectiveCash;
-    this.score += Math.round(25 * this.pointMultiplier * (this.scoreMultiplier || 1.0));
-    // Slight guardian recovery on clean cash collection
-    this.guardianDistance = Math.min(22.0, this.guardianDistance + 0.35);
+    
+    // Score based on denomination + risky lane bonus
+    const basePts = amount >= 5000 ? 150 : amount >= 1000 ? 50 : amount >= 500 ? 25 : 10;
+    const riskMultiplier = isRisky ? 2.0 : 1.0;
+    this.score += Math.round(basePts * riskMultiplier * this.pointMultiplier * (this.scoreMultiplier || 1.0));
+
+    // Naira Streak handling
+    const now = performance.now();
+    if (now - this.lastNairaTime < 2400) {
+      this.nairaStreak++;
+    } else {
+      this.nairaStreak = 1;
+    }
+    this.lastNairaTime = now;
+
+    // Trigger streak notifications on x3, x5, x10
+    if (this.nairaStreak === 3 || this.nairaStreak === 5 || this.nairaStreak === 10 || this.nairaStreak === 15) {
+      const bonusCash = this.nairaStreak * 100;
+      this.cash += bonusCash;
+      this.alertMessage = `🔥 NAIRA STREAK x${this.nairaStreak}! +₦${bonusCash.toLocaleString()} BONUS!`;
+      this.alertTimer = 1.0;
+      gameAudio.playNairaStreak(this.nairaStreak);
+    } else if (amount >= 1000) {
+      gameAudio.playHighValueNaira(amount);
+    } else {
+      gameAudio.playCollectCash();
+    }
+
+    // Minor guardian pushback on collecting Naira
+    this.guardianDistance = Math.min(22.0, this.guardianDistance + 0.3);
     this.notify(false);
   }
 
-  // Obstacle hit: DIES AFTER 2 HITS! (Strike 1 = Witch appears behind, Strike 2 = Fatal death / Revive)
-  hitObstacle() {
-    if (this.isDowned || this.isInvincible || this.status !== GAME_STATUS.PLAYING) return;
+  // Backward compatibility alias
+  collectCash(amount = 1000) {
+    this.collectNaira(amount, false);
+  }
 
-    // Check if player has an active vehicle shield
+  // Obstacle Hit: 2nd hit kills!
+  hitObstacle() {
+    if (this.isDowned || this.isInvincible || this.isSpeedBurstActive || this.status !== GAME_STATUS.PLAYING) return;
+
+    // Reset Naira streak on collision
+    this.nairaStreak = 0;
+
     if (this.remainingShields > 0) {
       this.remainingShields--;
       this.alertMessage = '🛡️ VEHICLE SHIELD ABSORBED HIT!';
       this.alertTimer = 1.0;
       this.isInvincible = true;
-      this.invincibleTimer = 1.5; // Brief invincibility after shield break
+      this.invincibleTimer = 1.5;
       this.notify(true);
       return;
     }
 
     this.strikes++;
     this.isDowned = true;
-    this.downedTimer = 0.85; // Down for 0.85s
+    this.downedTimer = 0.85;
     this.playerState = PLAYER_STATE.DOWNED;
 
-    // Drastically reduce speed to 4.5 m/s on stumble
-    this.speed = 4.5;
+    this.speed = 6.0;
     this.cleanRunDistance = 0;
     this.alertTimer = 1.0;
 
     if (this.strikes === 1) {
-      // Hit 1: Tripped, Witch appears behind!
-      this.guardianDistance = 6.2;
+      this.guardianDistance = 6.0;
       this.alertMessage = '⚠️ WITCH AWAKENED BEHIND YOU! NEXT HIT KILLS! (1/2)';
       gameAudio.playWitchShriek();
       this.notify(true);
     } else {
-      // Hit 2: Fatal! Character dies after hitting obstacles twice!
       this.guardianDistance = 0.0;
       this.alertMessage = '💀 WITCH STRIKES! RUNNER DOWN!';
       gameAudio.playGameOver();
-      // Trigger Revive Prompt!
       this.promptRevive();
     }
   }
 
-  // Prompt Revive Screen
   promptRevive() {
     this.status = GAME_STATUS.REVIVE;
-    this.reviveCountdown = 6.0; // 6 seconds to decide
+    this.reviveCountdown = 6.0;
     this.notify(true);
   }
 
-  // Revive with ₦1,000 (from run cash or career vault)
   reviveWithNaira() {
     if (this.cash >= 1000) {
       this.cash -= 1000;
@@ -307,12 +512,10 @@ class GameStateManager {
     } else {
       return false;
     }
-
     this.completeRevive();
     return true;
   }
 
-  // Revive with 1,500 points
   reviveWithPoints() {
     if (this.score < 1500) return false;
     this.score -= 1500;
@@ -320,24 +523,23 @@ class GameStateManager {
     return true;
   }
 
-  // Successful Revive execution
   completeRevive() {
     this.strikes = 0;
     this.isDowned = false;
     this.downedTimer = 0;
     this.isInvincible = true;
-    this.invincibleTimer = 3.5; // 3.5s golden invincibility shield
-    this.guardianDistance = 22.0; // Push witch far back
-    this.speed = Math.max(16.0, this.targetSpeed);
+    this.invincibleTimer = 3.5;
+    this.guardianDistance = 22.0;
+    this.speed = Math.max(21.0, this.targetSpeed);
     this.playerState = PLAYER_STATE.RUNNING;
     this.status = GAME_STATUS.PLAYING;
     this.alertMessage = '✨ REVIVED! SAFE SHIELD ACTIVE (3s)!';
     this.alertTimer = 1.2;
     gameAudio.playRevive();
+    gameAudio.startMusic(this.speed > 28.0 ? 'HIGHSPEED' : 'GAMEPLAY');
     this.notify(true);
   }
 
-  // Give Up / Decline Revive
   declineRevive() {
     this.gameOver('GUARDIAN_CAUGHT');
   }
@@ -347,6 +549,7 @@ class GameStateManager {
     this.status = GAME_STATUS.GAMEOVER;
     this.playerState = PLAYER_STATE.DEAD;
     this.reason = reason;
+    gameAudio.stopMusic();
 
     const runId = `run_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const runDate = new Date().toISOString();
@@ -382,13 +585,16 @@ class GameStateManager {
     this.notify(true);
   }
 
+  toggleSound() {
+    return gameAudio.toggleSound();
+  }
+
+  toggleMusic() {
+    return gameAudio.toggleMusic();
+  }
+
   toggleMute() {
-    this.isMuted = !this.isMuted;
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('naija_run_muted', this.isMuted.toString());
-    }
-    this.notify(true);
-    return this.isMuted;
+    return gameAudio.toggleSound();
   }
 
   toggleDebug() {
@@ -397,8 +603,32 @@ class GameStateManager {
     return this.debugMode;
   }
 
-  // Called in game loop to handle timers
   tick(dt) {
+    // Countdown state handler
+    if (this.status === GAME_STATUS.COUNTDOWN) {
+      this.countdownTimer -= dt;
+      if (this.countdownTimer <= 0) {
+        if (this.countdownValue === 3) {
+          this.countdownValue = 2;
+          this.countdownTimer = 0.65;
+          gameAudio.playCountdownTick(2);
+        } else if (this.countdownValue === 2) {
+          this.countdownValue = 1;
+          this.countdownTimer = 0.65;
+          gameAudio.playCountdownTick(1);
+        } else if (this.countdownValue === 1) {
+          this.countdownValue = 'GO!';
+          this.countdownTimer = 0.55;
+          gameAudio.playCountdownGo();
+        } else {
+          this.startGame();
+          return;
+        }
+        this.notify(true);
+      }
+      return;
+    }
+
     if (this.alertTimer > 0) {
       this.alertTimer -= dt;
       if (this.alertTimer <= 0) {
@@ -407,7 +637,7 @@ class GameStateManager {
       }
     }
 
-    // 2X Multiplier timer
+    // Multiplier timer
     if (this.multiplierTimer > 0) {
       this.multiplierTimer -= dt;
       if (this.multiplierTimer <= 0) {
@@ -416,13 +646,31 @@ class GameStateManager {
       }
     }
 
-    // Sango Shades Magnet timer
+    // Speed Burst timer
+    if (this.speedBurstTimer > 0) {
+      this.speedBurstTimer -= dt;
+      if (this.speedBurstTimer <= 0) {
+        this.isSpeedBurstActive = false;
+        this.notify(true);
+      }
+    }
+
+    // Chaos Event timer
+    if (this.activeChaosEvent) {
+      this.activeChaosEvent.timer -= dt;
+      if (this.activeChaosEvent.timer <= 0) {
+        this.activeChaosEvent = null;
+        this.notify(true);
+      }
+    }
+
+    // Magnet timer
     if (this.magnetTimer > 0) {
       this.magnetTimer -= dt;
     }
 
     // Invincibility shield timer
-    if (this.isInvincible) {
+    if (this.isInvincible && !this.isSpeedBurstActive) {
       this.invincibleTimer -= dt;
       if (this.invincibleTimer <= 0) {
         this.isInvincible = false;
@@ -449,6 +697,11 @@ class GameStateManager {
         }
         this.notify(true);
       }
+    }
+
+    // Streak timeout check: reset streak if no note collected within 3.5s
+    if (this.nairaStreak > 0 && performance.now() - this.lastNairaTime > 3500) {
+      this.nairaStreak = 0;
     }
   }
 }

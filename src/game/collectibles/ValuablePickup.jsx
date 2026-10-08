@@ -94,7 +94,7 @@ export function ValuablePickup({ id, type, lane, z }) {
           </group>
         )}
 
-        {/* 4. SANGO SHADES (Coin Magnet for 12s) */}
+        {/* 4. SANGO SHADES (Naira Magnet for 12s) */}
         {type === PICKUP_TYPE.SANGO_SHADES && (
           <group scale={[1.1, 1.1, 1.1]}>
             {/* Left Lens */}

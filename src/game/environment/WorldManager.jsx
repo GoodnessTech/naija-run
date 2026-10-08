@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { gameState, GAME_STATUS, LANE, LANE_WIDTH, PLAYER_STATE } from '../core/GameState';
+import { gameState, GAME_STATUS, LANE, LANE_WIDTH, PLAYER_STATE, BIOMES } from '../core/GameState';
 import { gameAudio } from '../core/GameAudio';
 import {
   LateritePath,
@@ -11,7 +11,11 @@ import {
   CeremonialTorchArch,
   SuspensionBridge,
   CaveTunnel,
-  DistantMistBackdrop
+  DistantMistBackdrop,
+  MarketStall,
+  RoadSign,
+  StreetLamp,
+  DangerRunePillar
 } from './EnvironmentAssets';
 import { ObstacleItem } from '../obstacles/ObstacleManager';
 import { OBSTACLE_TYPE, PICKUP_TYPE } from '../obstacles/ObstacleConstants';
@@ -19,129 +23,65 @@ import { NairaCollectible } from '../collectibles/NairaCollectible';
 import { ValuablePickup } from '../collectibles/ValuablePickup';
 import { FrontWitch } from '../guardian/FrontWitch';
 import { collectibleRegistry } from './CollectibleRegistry';
+import { segmentEngine, SEGMENT_TYPE } from './SegmentEngine';
 
 const CHUNK_LENGTH = 36;
-const TOTAL_CHUNKS = 8; // 8 chunks for deep horizon visibility
+const TOTAL_CHUNKS = 8; // 8 chunks for deep horizon visibility (288m visible track)
 
-// Biome selection based on absolute distance run
-function getBiomeForDistance(absZ) {
-  const dist = Math.abs(absZ) % 1600;
-  if (dist < 380) return 'FOREST';
-  if (dist < 780) return 'SHRINE';
-  if (dist < 1180) return 'VILLAGE';
-  return 'BRIDGE';
+// Determine biome from distance
+function getBiomeForDistance(distance) {
+  const dist = Math.abs(distance) % 3600;
+  if (dist < 400) return BIOMES.LAGOS_OUTSKIRTS;
+  if (dist < 900) return BIOMES.BUSY_LAGOS_ROAD;
+  if (dist < 1500) return BIOMES.MARKET_AREA;
+  if (dist < 2200) return BIOMES.DARK_FOREST;
+  if (dist < 3000) return BIOMES.NIGHT_RUN;
+  return BIOMES.DANGER_AREA;
 }
 
-// Generate unpredictable, highly varied obstacles and pickups for any chunk
+// Generate unpredictable, highly varied chunk using Segment Engine
 function createProceduralChunk(chunkIdx, baseZ) {
-  const biome = getBiomeForDistance(baseZ);
-  const obstacles = [];
-  const collectibles = [];
-  const valuables = [];
+  const distance = Math.abs(baseZ);
+  const biome = getBiomeForDistance(distance);
 
-  // 1. Banknote trails (6 to 10 notes along random lanes)
-  const trailLane = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
-  const noteCount = 6 + Math.floor(Math.random() * 4);
-  for (let i = 0; i < noteCount; i++) {
-    collectibles.push({
-      id: `c_${chunkIdx}_${i}_${Math.random()}`,
-      lane: trailLane,
-      z: -4 - i * 2.8,
-    });
-  }
-
-  // 2. Unpredictable Procedural Obstacles (1 or 2 per chunk after first 30m)
-  if (Math.abs(baseZ) > 30) {
-    const obstacleCount = Math.random() < 0.45 ? 2 : 1;
-    const allTypes = [
-      OBSTACLE_TYPE.ROCK,
-      OBSTACLE_TYPE.FALLEN_TREE,
-      OBSTACLE_TYPE.WOODEN_BARRIER,
-      OBSTACLE_TYPE.FIRE_BRAZIER,
-      OBSTACLE_TYPE.SACRED_TOTEM,
-      OBSTACLE_TYPE.OIL_DRUM_BARRICADE,
-      OBSTACLE_TYPE.MUD_POTHOLE,
-      OBSTACLE_TYPE.DANFO_WRECK,
-      OBSTACLE_TYPE.BENIN_STAFF_GATE,
-      OBSTACLE_TYPE.SNAKE_PIT
-    ];
-
-    const zPositions = [-12, -26];
-
-    for (let oIdx = 0; oIdx < obstacleCount; oIdx++) {
-      const type = allTypes[Math.floor(Math.random() * allTypes.length)];
-      const zOffset = zPositions[oIdx] + (Math.random() * 4 - 2);
-
-      if (type === OBSTACLE_TYPE.FALLEN_TREE || type === OBSTACLE_TYPE.BENIN_STAFF_GATE) {
-        // Full width arch: spans all 3 lanes, MUST SLIDE!
-        obstacles.push({
-          id: `obs_${chunkIdx}_${oIdx}_${Math.random()}`,
-          type,
-          lane: 0,
-          z: zOffset,
-          width: 3,
-        });
-      } else if (type === OBSTACLE_TYPE.DANFO_WRECK) {
-        // Large vehicle obstacle occupying 1 lane, offset so adjacent lane is safe
-        const blockedLane = Math.random() < 0.5 ? -1 : 1;
-        obstacles.push({
-          id: `obs_${chunkIdx}_${oIdx}_${Math.random()}`,
-          type,
-          lane: blockedLane,
-          z: zOffset,
-          width: 1,
-        });
-      } else {
-        // Single lane obstacle (Rock, Barrier, Brazier, Totem, Oil Drum, Pothole, Snake Pit)
-        const randLane = Math.floor(Math.random() * 3) - 1;
-        obstacles.push({
-          id: `obs_${chunkIdx}_${oIdx}_${Math.random()}`,
-          type,
-          lane: randLane,
-          z: zOffset,
-          width: 1,
-        });
-      }
+  // Very first starting chunk: gentle introductory sprint with initial Naira
+  if (distance < 30) {
+    const collectibles = [];
+    for (let i = 0; i < 7; i++) {
+      collectibles.push({
+        id: `c_start_${chunkIdx}_${i}`,
+        lane: 0,
+        z: -6 - i * 3.5,
+        value: 100,
+        isRisky: false
+      });
     }
+    return {
+      index: chunkIdx,
+      biome,
+      baseZ,
+      obstacles: [],
+      collectibles,
+      valuables: []
+    };
   }
 
-  // 3. 25% Chance to spawn a Valuable Cultural Artifact / 2X Multiplier
-  if (Math.random() < 0.35 && Math.abs(baseZ) > 40) {
-    const valTypes = [
-      PICKUP_TYPE.MULTIPLIER_2X,
-      PICKUP_TYPE.CORAL_BEADS,
-      PICKUP_TYPE.GOLDEN_SPIKES,
-      PICKUP_TYPE.SANGO_SHADES,
-      PICKUP_TYPE.ROYAL_AGBADA,
-    ];
-    const valType = valTypes[Math.floor(Math.random() * valTypes.length)];
-    const openLane = Math.floor(Math.random() * 3) - 1;
-    valuables.push({
-      id: `val_${chunkIdx}_${Math.random()}`,
-      type: valType,
-      lane: openLane,
-      z: -18 + (Math.random() * 6 - 3),
-    });
-  }
-
-  // 4. 20% Chance to spawn a Point Catalyst Trap (-100 PTS)
-  if (Math.random() < 0.22 && Math.abs(baseZ) > 60) {
-    const trapLane = Math.floor(Math.random() * 3) - 1;
-    valuables.push({
-      id: `trap_${chunkIdx}_${Math.random()}`,
-      type: PICKUP_TYPE.POINT_CATALYST,
-      lane: trapLane,
-      z: -22 + (Math.random() * 4 - 2),
-    });
-  }
+  // Pick varied segment using 4-history exclusion cooldown!
+  const segType = segmentEngine.pickSegment(distance);
+  const { obstacles, collectibles, valuables } = segmentEngine.generateSegmentContent(
+    segType,
+    chunkIdx,
+    baseZ,
+    distance
+  );
 
   return {
     index: chunkIdx,
-    type: biome,
+    biome,
     baseZ,
     obstacles,
     collectibles,
-    valuables,
+    valuables
   };
 }
 
@@ -149,23 +89,27 @@ export function WorldManager() {
   const backdropRef = useRef();
   const chunkGroupsRef = useRef([]);
   const hitObstaclesRef = useRef(new Set());
+  const nearMissCheckedRef = useRef(new Set());
 
   // Dynamic chunk pool data
   const [chunks, setChunks] = useState(() => {
+    segmentEngine.reset();
     return Array.from({ length: TOTAL_CHUNKS }).map((_, idx) => {
       return createProceduralChunk(idx, -idx * CHUNK_LENGTH);
     });
   });
 
-  // Track front witches
+  // Front witches state
   const [frontWitches, setFrontWitches] = useState([]);
 
   // Reset positions on restart
   useEffect(() => {
     const unsubscribe = gameState.subscribe((snap) => {
-      if (snap.status === GAME_STATUS.PLAYING && snap.distance < 2) {
+      if ((snap.status === GAME_STATUS.COUNTDOWN || snap.status === GAME_STATUS.PLAYING) && snap.distance < 2) {
         collectibleRegistry.reset();
+        segmentEngine.reset();
         hitObstaclesRef.current.clear();
+        nearMissCheckedRef.current.clear();
         chunkGroupsRef.current.forEach((grp, idx) => {
           if (grp) grp.position.z = -idx * CHUNK_LENGTH;
         });
@@ -207,14 +151,13 @@ export function WorldManager() {
 
     const poolSpan = TOTAL_CHUNKS * CHUNK_LENGTH;
 
-    // Dynamic Chunk Recycling: when 36m behind player, leap forward and GENERATE FRESH RANDOM CONTENT!
+    // Dynamic Chunk Recycling: leap forward and generate unpredictable fresh content!
     chunkGroupsRef.current.forEach((grp, chunkIdx) => {
       if (!grp) return;
       if (grp.position.z > pZ + 36) {
         const newZ = grp.position.z - poolSpan;
         grp.position.z = newZ;
 
-        // Generate brand new procedural content for this recycled chunk
         const freshChunk = createProceduralChunk(chunkIdx, newZ);
         setChunks((prev) => {
           const next = [...prev];
@@ -226,7 +169,7 @@ export function WorldManager() {
 
     if (gameState.status !== GAME_STATUS.PLAYING) return;
 
-    // Precise Mathematical Collision and Pickup Logic
+    // Mathematical Collisions, Pickups, and Near-Miss Detection
     for (let cIdx = 0; cIdx < TOTAL_CHUNKS; cIdx++) {
       const grp = chunkGroupsRef.current[cIdx];
       if (!grp) continue;
@@ -238,7 +181,7 @@ export function WorldManager() {
       const data = chunks[cIdx];
       if (!data) continue;
 
-      // 1. Banknote Collections (with Sango Shades Coin Magnet support!)
+      // 1. Banknote Collections with Denominations and Streaks
       for (let i = 0; i < data.collectibles.length; i++) {
         const col = data.collectibles[i];
         if (collectibleRegistry.collectedNotes.has(col.id)) continue;
@@ -250,17 +193,17 @@ export function WorldManager() {
         const noteWorldX = col.lane * LANE_WIDTH;
         const dx = Math.abs(pX - noteWorldX);
 
-        // If magnet is active, pulls coins within 4.5m horizontally!
+        // Magnet range
         const maxDx = isMagnetActive ? 4.5 : 1.38;
 
-        if (dx < maxDx && pY < 2.8) {
+        if (dx < maxDx && pY < (col.isHighJump ? 3.2 : 2.7)) {
           collectibleRegistry.collectedNotes.add(col.id);
-          gameAudio.playCollectCash();
-          gameState.collectCash(1000);
+          const value = col.value || 100;
+          gameState.collectNaira(value, col.isRisky || false);
         }
       }
 
-      // 2. Valuable Artifacts & 2X Multiplier & Point Catalyst Traps
+      // 2. Cultural Valuable Pickups, 2X Multiplier, and Point Catalyst Traps
       for (let i = 0; i < data.valuables.length; i++) {
         const val = data.valuables[i];
         const isCatalyst = val.type === PICKUP_TYPE.POINT_CATALYST;
@@ -293,14 +236,33 @@ export function WorldManager() {
         }
       }
 
-      // 3. Obstacle Collisions: Dies on 2nd hit! Slide / Jump / Dodge mechanics
-      if (!gameState.isDowned && !gameState.isInvincible) {
-        for (let i = 0; i < data.obstacles.length; i++) {
-          const obs = data.obstacles[i];
-          if (hitObstaclesRef.current.has(obs.id)) continue;
+      // 3. Obstacle Collision & Near-Miss Mechanics
+      for (let i = 0; i < data.obstacles.length; i++) {
+        const obs = data.obstacles[i];
+        const obsWorldZ = chunkZ - CHUNK_LENGTH / 2 + obs.z;
+        const dz = Math.abs(pZ - obsWorldZ);
 
-          const obsWorldZ = chunkZ - CHUNK_LENGTH / 2 + obs.z;
-          const dz = Math.abs(pZ - obsWorldZ);
+        if (dz > 2.4) continue;
+
+        const obsWorldX = obs.lane * LANE_WIDTH;
+        const dx = Math.abs(pX - obsWorldX);
+
+        // Near-miss check: player passed very close without colliding!
+        if (
+          !gameState.isDowned &&
+          dz < 1.35 &&
+          dx >= 1.25 &&
+          dx <= 2.15 &&
+          !hitObstaclesRef.current.has(obs.id) &&
+          !nearMissCheckedRef.current.has(obs.id)
+        ) {
+          nearMissCheckedRef.current.add(obs.id);
+          gameState.triggerNearMiss(obs.type);
+        }
+
+        // Fatal/Impact Collision check
+        if (!gameState.isDowned && !gameState.isInvincible && !gameState.isSpeedBurstActive) {
+          if (hitObstaclesRef.current.has(obs.id)) continue;
           if (dz > 1.65) continue;
 
           let isCollision = false;
@@ -314,17 +276,12 @@ export function WorldManager() {
             }
           } else if (obs.type === OBSTACLE_TYPE.WOODEN_BARRIER || obs.type === OBSTACLE_TYPE.SNAKE_PIT) {
             // Jump hurdle (MUST JUMP OVER!)
-            const obsWorldX = obs.lane * LANE_WIDTH;
-            const dx = Math.abs(pX - obsWorldX);
             if (dx < 1.35) {
-              if (pY < 0.82) isCollision = true;
+              if (pY < 0.85) isCollision = true;
             }
           } else {
             // Dodge obstacles (Rock, Brazier, Totem, Oil Drum, Pothole, Danfo Wreck)
-            const obsWorldX = obs.lane * LANE_WIDTH;
-            const dx = Math.abs(pX - obsWorldX);
             const hitThreshold = obs.type === OBSTACLE_TYPE.DANFO_WRECK ? 1.65 : 1.35;
-
             if (dx < hitThreshold) {
               if (obs.type === OBSTACLE_TYPE.MUD_POTHOLE) {
                 if (pY < 0.6 && pState !== PLAYER_STATE.SLIDING) isCollision = true;
@@ -353,15 +310,14 @@ export function WorldManager() {
       if (dz < 1.7) {
         const fwWorldX = fw.lane * LANE_WIDTH;
         const dx = Math.abs(pX - fwWorldX);
-        if (dx < 1.4 && !gameState.isInvincible && !gameState.isDowned) {
+        if (dx < 1.4 && !gameState.isInvincible && !gameState.isDowned && !gameState.isSpeedBurstActive) {
           collectibleRegistry.clearedFrontWitches.add(fw.id);
           gameAudio.playImpact();
           gameState.hitObstacle();
         }
       } else if (pZ < fw.z - 3.0) {
-        // Player passed front witch safely!
         collectibleRegistry.clearedFrontWitches.add(fw.id);
-        gameState.score += 150 * (gameState.pointMultiplier || 1);
+        gameState.score += 200 * (gameState.pointMultiplier || 1);
       }
     }
   });
@@ -381,7 +337,7 @@ export function WorldManager() {
           position={[0, 0, data.baseZ]}
         >
           <ChunkContent
-            type={data.type}
+            biome={data.biome}
             obstacles={data.obstacles}
             collectibles={data.collectibles}
             valuables={data.valuables}
@@ -397,62 +353,90 @@ export function WorldManager() {
   );
 }
 
-// Sub-component for chunk geometry and decorations
-function ChunkContent({ type, obstacles, collectibles, valuables = [] }) {
+// Sub-component for chunk geometry and zone decorations
+function ChunkContent({ biome, obstacles, collectibles, valuables = [] }) {
   return (
     <group position={[0, 0, -CHUNK_LENGTH / 2]}>
-      {/* Track Road Base */}
-      {type === 'BRIDGE' ? (
-        <SuspensionBridge length={CHUNK_LENGTH} width={6.6} />
-      ) : type === 'CAVE' ? (
-        <>
-          <LateritePath length={CHUNK_LENGTH} width={7.6} />
-          <CaveTunnel length={CHUNK_LENGTH} />
-        </>
-      ) : (
-        <LateritePath length={CHUNK_LENGTH} width={7.6} />
-      )}
+      {/* Track Base */}
+      <LateritePath length={CHUNK_LENGTH} width={7.6} />
 
-      {/* Biome Scenery based on current distance / region */}
-      {type === 'FOREST' && (
+      {/* Zone Scenery Variations */}
+      {biome === BIOMES.LAGOS_OUTSKIRTS && (
         <>
           <IrokoTree position={[-5.8, 0, -8]} scale={1.2} />
           <IrokoTree position={[5.8, 0, 10]} scale={1.1} />
           <CarvedMonolith position={[-4.2, 0, 0]} rotationY={0.3} />
           <CarvedMonolith position={[4.2, 0, 4]} rotationY={-0.4} />
-          <CeremonialTorchArch position={[0, 0, 15]} />
+          <VillageHut position={[-5.2, 0, -18]} rotationY={0.6} />
         </>
       )}
 
-      {type === 'VILLAGE' && (
+      {biome === BIOMES.BUSY_LAGOS_ROAD && (
         <>
-          <VillageHut position={[-5.0, 0, -9]} rotationY={0.8} />
-          <VillageHut position={[5.0, 0, -9]} rotationY={-0.8} />
-          <VillageHut position={[-5.0, 0, 9]} rotationY={0.5} />
-          <VillageHut position={[5.0, 0, 9]} rotationY={-0.5} />
-          <CeremonialTorchArch position={[0, 0, -17]} />
+          <RoadSign position={[-4.8, 0, -6]} rotationY={0.2} />
+          <RoadSign position={[4.8, 0, 12]} rotationY={-0.2} />
+          <StreetLamp position={[-4.5, 0, -16]} />
+          <StreetLamp position={[4.5, 0, 4]} />
+          <CarvedMonolith position={[-4.2, 0, 8]} />
         </>
       )}
 
-      {type === 'SHRINE' && (
+      {biome === BIOMES.MARKET_AREA && (
         <>
-          <CarvedMonolith position={[-4.2, 0, -10]} />
-          <CarvedMonolith position={[4.2, 0, -10]} />
-          <CarvedMonolith position={[-4.2, 0, 10]} />
-          <CarvedMonolith position={[4.2, 0, 10]} />
+          <MarketStall position={[-4.6, 0, -10]} rotationY={0.3} color="red" />
+          <MarketStall position={[4.6, 0, -10]} rotationY={-0.3} color="yellow" />
+          <MarketStall position={[-4.6, 0, 10]} rotationY={0.2} color="green" />
+          <MarketStall position={[4.6, 0, 10]} rotationY={-0.2} color="yellow" />
+          <VillageHut position={[5.2, 0, 0]} rotationY={-0.8} />
+        </>
+      )}
+
+      {biome === BIOMES.DARK_FOREST && (
+        <>
+          <IrokoTree position={[-5.6, 0, -12]} scale={1.4} />
+          <IrokoTree position={[5.6, 0, 6]} scale={1.35} />
+          <CarvedMonolith position={[-4.2, 0, -4]} />
+          <CarvedMonolith position={[4.2, 0, 4]} />
           <CeremonialTorchArch position={[0, 0, 0]} />
-          <pointLight position={[0, 3.5, 0]} color="#10b981" intensity={2.4} distance={14} />
+          <pointLight position={[0, 3.5, 0]} color="#10b981" intensity={2.0} distance={14} />
         </>
       )}
 
-      {/* Obstacles (10 distinct types) */}
+      {biome === BIOMES.NIGHT_RUN && (
+        <>
+          <StreetLamp position={[-4.5, 0, -14]} />
+          <StreetLamp position={[4.5, 0, 2]} />
+          <StreetLamp position={[-4.5, 0, 16]} />
+          <CarvedMonolith position={[4.2, 0, -6]} />
+          <CeremonialTorchArch position={[0, 0, 16]} />
+        </>
+      )}
+
+      {biome === BIOMES.DANGER_AREA && (
+        <>
+          <DangerRunePillar position={[-4.4, 0, -10]} />
+          <DangerRunePillar position={[4.4, 0, 6]} />
+          <CeremonialTorchArch position={[0, 0, -16]} />
+          <pointLight position={[0, 3.5, 0]} color="#ef4444" intensity={2.5} distance={15} />
+        </>
+      )}
+
+      {/* Obstacles */}
       {obstacles.map((obs) => (
         <ObstacleItem key={obs.id} obstacle={obs} />
       ))}
 
-      {/* Naira Banknotes */}
+      {/* Naira Banknotes with Denominations */}
       {collectibles.map((col) => (
-        <NairaCollectible key={col.id} id={col.id} lane={col.lane} z={col.z} />
+        <NairaCollectible
+          key={col.id}
+          id={col.id}
+          lane={col.lane}
+          z={col.z}
+          value={col.value || 100}
+          isHighJump={col.isHighJump || false}
+          isSlideBonus={col.isSlideBonus || false}
+        />
       ))}
 
       {/* Valuable Cultural Pickups & 2X Multiplier & Catalyst Traps */}

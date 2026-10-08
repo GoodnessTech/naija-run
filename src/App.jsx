@@ -8,6 +8,7 @@ import { PauseMenu } from './ui/PauseMenu';
 import { GameOverModal } from './ui/GameOverModal';
 import { ReviveModal } from './ui/ReviveModal';
 import { LoadingScreen } from './ui/LoadingScreen';
+import { CountdownOverlay } from './ui/CountdownOverlay';
 import { ScreenEffects } from './game/effects/ScreenEffects';
 import { DebugOverlay } from './ui/DebugOverlay';
 
@@ -68,11 +69,12 @@ class CanvasErrorBoundary extends React.Component {
 
 export default function App() {
   const [status, setStatus] = useState(gameState.status);
-  const [assetsLoaded, setAssetsLoaded] = useState(false);
+  const [countdownVal, setCountdownVal] = useState(gameState.countdownValue);
 
   useEffect(() => {
     const unsubscribe = gameState.subscribe((snap) => {
       setStatus(snap.status);
+      setCountdownVal(snap.countdownValue);
     });
     return unsubscribe;
   }, []);
@@ -111,7 +113,11 @@ export default function App() {
 
       {/* UI Overlays based on Game Status */}
       {assetsLoaded && status === GAME_STATUS.MENU && (
-        <MainMenu onPlay={() => gameState.startGame()} />
+        <MainMenu onPlay={() => {}} />
+      )}
+
+      {assetsLoaded && status === GAME_STATUS.COUNTDOWN && (
+        <CountdownOverlay value={countdownVal} />
       )}
 
       {assetsLoaded && (status === GAME_STATUS.PLAYING || status === GAME_STATUS.PAUSED) && (

@@ -10,7 +10,7 @@ export function Guardian() {
   const groupRef = useRef();
   const innerRef = useRef();
 
-  // Load the actual guardian GLB
+  // Load guardian GLB
   const { scene } = useGLTF('/assets/characters/guardian.glb');
 
   const eyeMaterial = useMemo(() => {
@@ -46,49 +46,59 @@ export function Guardian() {
     const g = guardianState.current;
     if (!groupRef.current) return;
 
-    if (gameState.status === GAME_STATUS.PLAYING) {
-      // 1. Follow player along Z with current chase distance
-      const targetZ = gameState.playerZ + gameState.guardianDistance;
+    if (gameState.status === GAME_STATUS.PLAYING || gameState.status === GAME_STATUS.COUNTDOWN) {
+      const gDist = gameState.guardianDistance;
+      const targetZ = gameState.playerZ + gDist;
       const targetX = gameState.currentLane * 1.8;
-      g.x = THREE.MathUtils.lerp(g.x, targetX, dt * 5.0);
+      g.x = THREE.MathUtils.lerp(g.x, targetX, dt * 5.5);
 
-      // Visually only show Witch behind player after hitting an obstacle (Strike 1 or 2)
-      // When strikes === 0, she lurks far back in shadows
-      const isWitchActive = gameState.strikes >= 1;
-      groupRef.current.visible = isWitchActive;
+      // Chaser 5-Phase System:
+      // Phase 1: > 16m
+      // Phase 2: 12 - 16m
+      // Phase 3: 8 - 12m
+      // Phase 4: 4 - 8m
+      // Phase 5: < 4m
+      // Chaser is always active in the world, escalating visibility with phases or strikes
+      const isVisible = gameState.strikes >= 1 || gDist < 18.0 || gameState.distance > 500;
+      groupRef.current.visible = isVisible;
 
-      if (isWitchActive) {
-        // Heavy lumbering stride
-        g.strideTime += dt * (gameState.speed * 0.45);
-        const heavyBob = Math.sin(g.strideTime * 2) * 0.22;
-        const menacingSway = Math.cos(g.strideTime) * 0.18;
+      if (isVisible) {
+        // Stride frequency scales with speed and phase
+        const phaseFactor = gDist < 6.0 ? 0.65 : 0.45;
+        g.strideTime += dt * (gameState.speed * phaseFactor);
+        const heavyBob = Math.sin(g.strideTime * 2) * (gDist < 6.0 ? 0.32 : 0.22);
+        const menacingSway = Math.cos(g.strideTime) * (gDist < 6.0 ? 0.25 : 0.16);
 
         groupRef.current.position.set(g.x, heavyBob, targetZ);
 
-        // Dynamically react eye color to strikes: Red on Strike 2
+        // Visual reaction to Phase & Strikes:
+        // Phase 4 & 5 or Strike 2: Furious Red
+        // Phase 3 or Strike 1: Blazing Amber
+        // Phase 1 & 2: Eerie Emerald Glow
         if (eyeMaterial) {
-          if (gameState.strikes >= 2) {
+          if (gDist < 6.0 || gameState.strikes >= 2) {
             eyeMaterial.color.set('#ef4444');
             eyeMaterial.emissive.set('#dc2626');
-            eyeMaterial.emissiveIntensity = 6.0;
-          } else {
+            eyeMaterial.emissiveIntensity = 7.0;
+          } else if (gDist < 12.0 || gameState.strikes === 1) {
             eyeMaterial.color.set('#f59e0b');
             eyeMaterial.emissive.set('#d97706');
-            eyeMaterial.emissiveIntensity = 4.2;
+            eyeMaterial.emissiveIntensity = 4.8;
+          } else {
+            eyeMaterial.color.set('#10b981');
+            eyeMaterial.emissive.set('#059669');
+            eyeMaterial.emissiveIntensity = 3.2;
           }
         }
 
-        // Calculate guardian pressure (0 to 1)
-        const pressure = THREE.MathUtils.clamp((18.0 - gameState.guardianDistance) / 15.0, 0, 1.0);
-        gameState.guardianPressure = pressure;
-
-        // Heartbeat audio triggers as guardian gets close
-        if (gameState.guardianDistance < 12.0) {
+        // Heartbeat audio triggers in Phase 3, 4, 5 (<12m)
+        if (gDist < 12.0) {
+          const pressure = THREE.MathUtils.clamp((16.0 - gDist) / 14.0, 0, 1.0);
           gameAudio.playHeartbeat(pressure);
         }
 
-        // Supernatural roar when close
-        if (gameState.guardianDistance < 7.0 && Math.random() < 0.003) {
+        // Occasional supernatural roar when aggressive (<7m)
+        if (gDist < 7.0 && Math.random() < 0.004) {
           gameAudio.playGuardianRoar();
         }
 
@@ -96,11 +106,12 @@ export function Guardian() {
         if (innerRef.current) {
           innerRef.current.rotation.y = Math.PI; // Face running direction (-Z)
           innerRef.current.rotation.z = menacingSway;
-          innerRef.current.rotation.x = 0.2 + pressure * 0.25;
+          const forwardLungeAngle = gDist < 5.0 ? 0.45 : 0.22;
+          innerRef.current.rotation.x = forwardLungeAngle;
         }
 
-        // Catch check!
-        if (gameState.guardianDistance <= 1.3 && !g.lunging) {
+        // Fatal Catch check
+        if (gDist <= 1.2 && !g.lunging) {
           g.lunging = true;
           gameAudio.playGuardianRoar();
           gameAudio.playImpact();
@@ -110,7 +121,7 @@ export function Guardian() {
     } else if (gameState.status === GAME_STATUS.GAMEOVER) {
       groupRef.current.visible = true;
       if (innerRef.current) {
-        innerRef.current.rotation.x = 0.4;
+        innerRef.current.rotation.x = 0.5;
       }
     } else {
       groupRef.current.visible = false;
@@ -127,22 +138,22 @@ export function Guardian() {
 
         {/* Piercing Glowing Eyes */}
         <mesh position={[-0.22, 0.48, 0.45]} material={eyeMaterial}>
-          <sphereGeometry args={[0.07, 8, 8]} />
+          <sphereGeometry args={[0.08, 8, 8]} />
         </mesh>
         <mesh position={[0.22, 0.48, 0.45]} material={eyeMaterial}>
-          <sphereGeometry args={[0.07, 8, 8]} />
+          <sphereGeometry args={[0.08, 8, 8]} />
         </mesh>
 
         {/* Supernatural Glowing Chest Rune */}
         <mesh position={[0, 0.05, 0.38]} material={eyeMaterial}>
-          <octahedronGeometry args={[0.12, 0]} />
+          <octahedronGeometry args={[0.14, 0]} />
         </mesh>
       </group>
 
-      {/* Trailing Dark Mystical Aura Ring */}
+      {/* Trailing Mystical Dark Smoke Ring */}
       <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.8, 2.2, 12]} />
-        <meshBasicMaterial color="#052e16" transparent opacity={0.4} />
+        <ringGeometry args={[0.8, 2.4, 12]} />
+        <meshBasicMaterial color="#052e16" transparent opacity={0.45} />
       </mesh>
     </group>
   );

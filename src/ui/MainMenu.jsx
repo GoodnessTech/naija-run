@@ -17,7 +17,10 @@ export function MainMenu({ onPlay }) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [isMuted, setIsMuted] = useState(gameState.isMuted);
+  
+  // Independent audio toggles
+  const [isMusicOn, setIsMusicOn] = useState(gameAudio.isMusicOn);
+  const [isSoundOn, setIsSoundOn] = useState(gameAudio.isSoundOn);
 
   useEffect(() => {
     const unsubProfile = userProfile.subscribe((snap) => setProfile(snap));
@@ -28,17 +31,23 @@ export function MainMenu({ onPlay }) {
     };
   }, []);
 
-  const handlePlay = () => {
+  const handleStartRun = () => {
     gameAudio.resumeContext();
-    gameState.startGame();
+    gameAudio.playButtonClick();
+    gameState.startCountdown();
     if (onPlay) onPlay();
   };
 
   const handleToggleSound = () => {
     gameAudio.resumeContext();
-    const muted = gameState.toggleMute();
-    gameAudio.setMuted(muted);
-    setIsMuted(muted);
+    const soundState = gameAudio.toggleSound();
+    setIsSoundOn(soundState);
+  };
+
+  const handleToggleMusic = () => {
+    gameAudio.resumeContext();
+    const musicState = gameAudio.toggleMusic();
+    setIsMusicOn(musicState);
   };
 
   return (
@@ -49,10 +58,10 @@ export function MainMenu({ onPlay }) {
         flexDirection: 'column',
         justifyContent: 'space-between',
         padding: '24px 20px',
-        background: 'linear-gradient(180deg, rgba(87, 80, 116, 0.4) 0%, rgba(32, 33, 36, 0.78) 100%)',
+        background: 'linear-gradient(180deg, rgba(87, 80, 116, 0.4) 0%, rgba(32, 33, 36, 0.82) 100%)',
       }}
     >
-      {/* Top Bar: Profile Card, Sound toggle & Branding */}
+      {/* Top Bar: Profile Card, Account & Modals */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
         {/* User Account / Profile Card */}
         <button
@@ -104,7 +113,6 @@ export function MainMenu({ onPlay }) {
 
         {/* Right Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Sign Up / Account Button */}
           <button
             onClick={() => setShowAuthModal(true)}
             className="glass-panel"
@@ -169,15 +177,6 @@ export function MainMenu({ onPlay }) {
           >
             <span>🏆</span> RANKS
           </button>
-
-          <button
-            onClick={handleToggleSound}
-            className="btn-icon"
-            title={isMuted ? 'Unmute Sound' : 'Mute Sound'}
-            aria-label="Toggle Sound"
-          >
-            {isMuted ? '🔇' : '🔊'}
-          </button>
         </div>
       </div>
 
@@ -217,26 +216,79 @@ export function MainMenu({ onPlay }) {
             letterSpacing: '3px',
             color: '#19B66B',
             background: '#FFFFFF',
-            padding: '5px 16px',
+            padding: '6px 18px',
             borderRadius: '999px',
             display: 'inline-block',
             textTransform: 'uppercase',
             boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-            marginBottom: '26px',
+            marginBottom: '24px',
           }}
         >
-          RUN • SURVIVE • ESCAPE
+          RUN. DODGE. SURVIVE.
         </div>
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
           <button
-            onClick={handlePlay}
+            onClick={handleStartRun}
             className="btn-primary"
-            style={{ width: '100%', maxWidth: '280px', fontSize: '1.15rem', padding: '16px 28px' }}
+            style={{
+              width: '100%',
+              maxWidth: '280px',
+              fontSize: '1.25rem',
+              padding: '16px 28px',
+              boxShadow: '0 8px 28px rgba(25, 182, 107, 0.45)',
+              transform: 'scale(1)',
+              transition: 'transform 0.15s ease',
+            }}
           >
-            <span>▶</span> PLAY RUN
+            <span>▶</span> START RUN
           </button>
+
+          {/* Audio Controls Bar */}
+          <div style={{ display: 'flex', gap: '8px', width: '100%', maxWidth: '280px' }}>
+            <button
+              onClick={handleToggleMusic}
+              className="glass-panel"
+              style={{
+                flex: 1,
+                padding: '10px',
+                fontSize: '0.82rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                background: isMusicOn ? '#EAF8F0' : '#FFFFFF',
+                color: isMusicOn ? '#19B66B' : '#5f6368',
+                border: isMusicOn ? '1.5px solid #19B66B' : '1px solid rgba(0, 0, 0, 0.08)',
+              }}
+            >
+              <span>🎵 MUSIC:</span> {isMusicOn ? 'ON' : 'OFF'}
+            </button>
+
+            <button
+              onClick={handleToggleSound}
+              className="glass-panel"
+              style={{
+                flex: 1,
+                padding: '10px',
+                fontSize: '0.82rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                background: isSoundOn ? '#EAF8F0' : '#FFFFFF',
+                color: isSoundOn ? '#19B66B' : '#5f6368',
+                border: isSoundOn ? '1.5px solid #19B66B' : '1px solid rgba(0, 0, 0, 0.08)',
+              }}
+            >
+              <span>🔊 SOUND:</span> {isSoundOn ? 'ON' : 'OFF'}
+            </button>
+          </div>
 
           <div style={{ display: 'flex', gap: '10px', width: '100%', maxWidth: '280px' }}>
             <button
@@ -252,38 +304,20 @@ export function MainMenu({ onPlay }) {
             </button>
 
             <button
-              onClick={() => setShowLeaderboard(true)}
-              className="btn-secondary"
+              onClick={() => setShowHowTo(true)}
+              className="glass-panel"
               style={{
                 flex: 1,
                 padding: '12px',
                 fontSize: '0.88rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                color: '#202124',
               }}
             >
-              <span>🏆</span> RANKS
+              <span>📜</span> GUIDE
             </button>
           </div>
-
-          <button
-            onClick={() => setShowHowTo(true)}
-            className="glass-panel"
-            style={{
-              width: '100%',
-              maxWidth: '280px',
-              fontSize: '0.88rem',
-              fontWeight: 800,
-              padding: '12px',
-              cursor: 'pointer',
-              color: '#202124',
-              fontFamily: 'var(--font-sf-text)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-            }}
-          >
-            <span>📜</span> HOW TO PLAY
-          </button>
         </div>
       </div>
 
@@ -328,7 +362,7 @@ export function MainMenu({ onPlay }) {
           <span style={{ fontSize: '20px' }}>💵</span>
           <div>
             <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#5f6368', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              MOST CASH IN 1 RUN
+              MOST NAIRA IN 1 RUN
             </div>
             <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#19B66B', fontFamily: 'var(--font-sf-display)' }}>
               ₦{gameState.highCash.toLocaleString()}

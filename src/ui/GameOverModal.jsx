@@ -12,8 +12,8 @@ export function GameOverModal({ onPlayAgain, onMainMenu }) {
   const isNewHighScore = gameState.score >= gameState.highScore && gameState.score > 0;
   const reasonText =
     gameState.reason === 'GUARDIAN_CAUGHT'
-      ? 'The Forest Witch has caught you!'
-      : 'Struck by road hazard!';
+      ? 'The Supernatural Forest Witch caught up!'
+      : 'Struck down by highway obstacle!';
 
   return (
     <div
@@ -25,8 +25,8 @@ export function GameOverModal({ onPlayAgain, onMainMenu }) {
         right: 0,
         bottom: 0,
         background: 'rgba(87, 80, 116, 0.88)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        backdropFilter: 'blur(22px)',
+        WebkitBackdropFilter: 'blur(22px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -48,9 +48,10 @@ export function GameOverModal({ onPlayAgain, onMainMenu }) {
           color: '#202124',
           boxShadow: '0 24px 60px rgba(87, 80, 116, 0.35)',
           fontFamily: 'var(--font-sf-text)',
+          animation: 'countdown-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         }}
       >
-        {/* Skull Icon in Soft Pink Bubble */}
+        {/* Skull Emblem */}
         <div
           style={{
             width: '64px',
@@ -62,7 +63,7 @@ export function GameOverModal({ onPlayAgain, onMainMenu }) {
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '32px',
-            margin: '0 auto 12px',
+            margin: '0 auto 10px',
           }}
         >
           💀
@@ -71,28 +72,29 @@ export function GameOverModal({ onPlayAgain, onMainMenu }) {
         <h2
           style={{
             fontFamily: 'var(--font-sf-display)',
-            fontSize: '1.75rem',
-            fontWeight: 800,
+            fontSize: '1.9rem',
+            fontWeight: 900,
             color: '#202124',
-            letterSpacing: '-0.5px',
+            letterSpacing: '1px',
+            textTransform: 'uppercase',
             marginBottom: '4px',
           }}
         >
-          Game Over
+          RUN OVER
         </h2>
 
         <p
           style={{
             fontSize: '0.85rem',
             color: '#5f6368',
-            marginBottom: '20px',
+            marginBottom: '18px',
             fontWeight: 600,
           }}
         >
           {reasonText}
         </p>
 
-        {/* Stats Grid */}
+        {/* Stats Grid: SCORE, DISTANCE, NAIRA, BEST SCORE */}
         <div
           style={{
             display: 'grid',
@@ -101,6 +103,24 @@ export function GameOverModal({ onPlayAgain, onMainMenu }) {
             marginBottom: '18px',
           }}
         >
+          {/* SCORE */}
+          <div
+            style={{
+              background: '#f8f9fa',
+              border: isNewHighScore ? '1.5px solid #2F6FB7' : '1px solid #e8eaed',
+              borderRadius: '16px',
+              padding: '12px',
+            }}
+          >
+            <div style={{ fontSize: '0.68rem', color: isNewHighScore ? '#2F6FB7' : '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
+              {isNewHighScore ? '★ NEW BEST SCORE ★' : 'SCORE'}
+            </div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 900, color: isNewHighScore ? '#2F6FB7' : '#202124', fontFamily: 'var(--font-sf-display)', marginTop: '2px' }}>
+              {Math.floor(gameState.score).toLocaleString()}
+            </div>
+          </div>
+
+          {/* DISTANCE */}
           <div
             style={{
               background: '#f8f9fa',
@@ -109,14 +129,15 @@ export function GameOverModal({ onPlayAgain, onMainMenu }) {
               padding: '12px',
             }}
           >
-            <div style={{ fontSize: '0.68rem', color: '#5f6368', letterSpacing: '0.5px', fontWeight: 700 }}>
-              DISTANCE RUN
+            <div style={{ fontSize: '0.68rem', color: '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
+              DISTANCE
             </div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#202124', fontFamily: 'var(--font-sf-display)', marginTop: '2px' }}>
-              {Math.floor(gameState.distance)} <span style={{ fontSize: '0.75rem', color: '#5f6368' }}>m</span>
+            <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#202124', fontFamily: 'var(--font-sf-display)', marginTop: '2px' }}>
+              {Math.floor(gameState.distance).toLocaleString()} <span style={{ fontSize: '0.75rem', color: '#5f6368' }}>m</span>
             </div>
           </div>
 
+          {/* NAIRA */}
           <div
             style={{
               background: '#EAF8F0',
@@ -125,73 +146,57 @@ export function GameOverModal({ onPlayAgain, onMainMenu }) {
               padding: '12px',
             }}
           >
-            <div style={{ fontSize: '0.68rem', color: '#19B66B', letterSpacing: '0.5px', fontWeight: 700 }}>
-              CASH THIS RUN
+            <div style={{ fontSize: '0.68rem', color: '#19B66B', letterSpacing: '0.8px', fontWeight: 800 }}>
+              NAIRA
             </div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#19B66B', fontFamily: 'var(--font-sf-display)', marginTop: '2px' }}>
-              +₦{gameState.cash.toLocaleString()}
+            <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#19B66B', fontFamily: 'var(--font-sf-display)', marginTop: '2px' }}>
+              ₦{gameState.cash.toLocaleString()}
             </div>
           </div>
 
+          {/* BEST SCORE */}
+          <div
+            style={{
+              background: '#f8f9fa',
+              border: '1px solid #e8eaed',
+              borderRadius: '16px',
+              padding: '12px',
+            }}
+          >
+            <div style={{ fontSize: '0.68rem', color: '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
+              BEST SCORE
+            </div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#2F6FB7', fontFamily: 'var(--font-sf-display)', marginTop: '2px' }}>
+              {gameState.highScore.toLocaleString()}
+            </div>
+          </div>
+
+          {/* Lifetime Vault Total */}
           <div
             style={{
               gridColumn: '1 / -1',
               background: '#EAF8F0',
               border: '1px solid #d5f2e1',
               borderRadius: '16px',
-              padding: '12px 16px',
+              padding: '10px 16px',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
             }}
           >
             <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: '0.68rem', color: '#19B66B', fontWeight: 800 }}>BANKED TO VAULT</div>
-              <div style={{ fontSize: '0.76rem', color: '#5f6368' }}>Lifetime Total Wealth</div>
+              <div style={{ fontSize: '0.66rem', color: '#19B66B', fontWeight: 800 }}>BANKED TO VAULT</div>
+              <div style={{ fontSize: '0.72rem', color: '#5f6368' }}>Total Career Wealth</div>
             </div>
             <div
               style={{
-                fontSize: '1.3rem',
+                fontSize: '1.25rem',
                 fontWeight: 900,
                 color: '#19B66B',
                 fontFamily: 'var(--font-sf-display)',
               }}
             >
               ₦{profile.wallet.toLocaleString()}
-            </div>
-          </div>
-
-          <div
-            style={{
-              gridColumn: '1 / -1',
-              background: isNewHighScore ? '#eef4fb' : '#f8f9fa',
-              border: isNewHighScore ? '1.5px solid #2F6FB7' : '1px solid #e8eaed',
-              borderRadius: '16px',
-              padding: '14px',
-            }}
-          >
-            {isNewHighScore && (
-              <span
-                style={{
-                  display: 'inline-block',
-                  background: '#2F6FB7',
-                  color: '#ffffff',
-                  fontSize: '0.65rem',
-                  fontWeight: 800,
-                  letterSpacing: '0.5px',
-                  padding: '2px 8px',
-                  borderRadius: '6px',
-                  marginBottom: '6px',
-                }}
-              >
-                ★ NEW HIGH SCORE! ★
-              </span>
-            )}
-            <div style={{ fontSize: '0.72rem', color: isNewHighScore ? '#2F6FB7' : '#5f6368', letterSpacing: '0.5px', fontWeight: 700 }}>
-              FINAL SCORE
-            </div>
-            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: isNewHighScore ? '#2F6FB7' : '#202124', fontFamily: 'var(--font-sf-display)', marginTop: '2px' }}>
-              {Math.floor(gameState.score).toLocaleString()}
             </div>
           </div>
         </div>
@@ -216,55 +221,77 @@ export function GameOverModal({ onPlayAgain, onMainMenu }) {
                 boxShadow: '0 6px 20px rgba(25, 182, 107, 0.4)',
               }}
             >
-              <span>✨</span> REVIVE & RESUME RUN (₦1k / 1.5k pts)
+              <span>✨</span> REVIVE & RESUME (₦1k / 1.5k pts)
             </button>
           )}
 
-          <button onClick={onPlayAgain} className="btn-blue" style={{ width: '100%', fontSize: '1rem', padding: '14px' }}>
-            <span>↺</span> NEW RUN
+          {/* RUN AGAIN */}
+          <button
+            onClick={onPlayAgain}
+            className="btn-blue"
+            style={{
+              width: '100%',
+              fontSize: '1.05rem',
+              padding: '14px',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}
+          >
+            <span>↺</span> RUN AGAIN
           </button>
 
           <div style={{ display: 'flex', gap: '10px' }}>
             <button
               onClick={() => setShowShop(true)}
-              className="btn-blue"
+              className="glass-panel"
               style={{
                 flex: 1,
                 padding: '12px',
                 fontSize: '0.88rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                color: '#202124',
               }}
             >
-              <span>🛒</span> BUY GEAR
+              <span>🛒</span> GARAGE
             </button>
 
             <button
               onClick={() => setShowLeaderboard(true)}
-              className="btn-secondary"
+              className="glass-panel"
               style={{
                 flex: 1,
                 padding: '12px',
                 fontSize: '0.88rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                color: '#19B66B',
+                background: '#EAF8F0',
+                border: '1px solid rgba(25, 182, 107, 0.3)',
               }}
             >
               <span>🏆</span> RANKS
             </button>
           </div>
 
+          {/* MENU */}
           <button
             onClick={onMainMenu}
             style={{
               width: '100%',
-              fontSize: '0.88rem',
+              fontSize: '0.9rem',
               padding: '12px',
               background: '#f8f9fa',
               color: '#5f6368',
               border: '1px solid #dadce0',
               borderRadius: '12px',
-              fontWeight: 700,
+              fontWeight: 800,
               cursor: 'pointer',
+              letterSpacing: '0.5px'
             }}
           >
-            MAIN MENU
+            MENU
           </button>
         </div>
       </div>

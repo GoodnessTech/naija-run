@@ -161,5 +161,39 @@ export const SHARED_MATS = {
   }),
   lightningCyan: new THREE.MeshBasicMaterial({
     color: '#22d3ee',
+  }),
+
+  // Gameplay 2.0 Zone Materials
+  marketFabricRed: new THREE.MeshStandardMaterial({
+    color: '#e11d48',
+    roughness: 0.6,
+  }),
+  marketFabricYellow: new THREE.MeshStandardMaterial({
+    color: '#eab308',
+    roughness: 0.6,
+  }),
+  marketFabricGreen: new THREE.MeshStandardMaterial({
+    color: '#16a34a',
+    roughness: 0.6,
+  }),
+  roadSignGreen: new THREE.MeshStandardMaterial({
+    color: '#15803d',
+    roughness: 0.4,
+  }),
+  signPoleMetal: new THREE.MeshStandardMaterial({
+    color: '#64748b',
+    roughness: 0.3,
+    metalness: 0.7,
+  }),
+  nightLampGlow: new THREE.MeshBasicMaterial({
+    color: '#fef08a',
+  }),
+  dangerObsidian: new THREE.MeshStandardMaterial({
+    color: '#18181b',
+    roughness: 0.3,
+    metalness: 0.8,
+  }),
+  dangerRuneCrimson: new THREE.MeshBasicMaterial({
+    color: '#ef4444',
   })
 };

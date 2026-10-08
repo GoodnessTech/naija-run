@@ -231,6 +231,12 @@ html, body, #root {
   100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(25, 182, 107, 0.3)); }
 }
 
+@keyframes countdown-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 /* Vignette for Guardian Danger */
 .guardian-vignette {
   position: absolute;

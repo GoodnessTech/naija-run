@@ -1,10 +1,10 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { gameState } from '../core/GameState';
+import { gameState, BIOMES } from '../core/GameState';
 
-const BIOME_PALETTES = {
-  FOREST: {
+const ZONE_PALETTES = {
+  [BIOMES.LAGOS_OUTSKIRTS]: {
     bg: '#0e2617',
     fog: '#0d2315',
     sun: '#fffbeb',
@@ -12,29 +12,45 @@ const BIOME_PALETTES = {
     hemiTop: '#fef9c3',
     hemiBottom: '#963c22',
   },
-  SHRINE: {
-    bg: '#251233',
-    fog: '#1e0c29',
-    sun: '#c084fc',
-    ambient: '#581c87',
-    hemiTop: '#e9d5ff',
-    hemiBottom: '#3b0764',
+  [BIOMES.BUSY_LAGOS_ROAD]: {
+    bg: '#2d3748',
+    fog: '#1e293b',
+    sun: '#fde047',
+    ambient: '#94a3b8',
+    hemiTop: '#fef08a',
+    hemiBottom: '#475569',
   },
-  VILLAGE: {
-    bg: '#331b0e',
-    fog: '#2d1509',
+  [BIOMES.MARKET_AREA]: {
+    bg: '#3b1d11',
+    fog: '#31170d',
     sun: '#fbbf24',
-    ambient: '#92400e',
-    hemiTop: '#fef3c7',
+    ambient: '#b45309',
+    hemiTop: '#fed7aa',
     hemiBottom: '#78350f',
   },
-  BRIDGE: {
-    bg: '#0b1926',
-    fog: '#07121c',
+  [BIOMES.DARK_FOREST]: {
+    bg: '#051b14',
+    fog: '#041610',
+    sun: '#34d399',
+    ambient: '#064e3b',
+    hemiTop: '#a7f3d0',
+    hemiBottom: '#022c22',
+  },
+  [BIOMES.NIGHT_RUN]: {
+    bg: '#090d16',
+    fog: '#060911',
     sun: '#38bdf8',
-    ambient: '#0369a1',
-    hemiTop: '#bae6fd',
-    hemiBottom: '#082f49',
+    ambient: '#1e293b',
+    hemiTop: '#7dd3fc',
+    hemiBottom: '#020617',
+  },
+  [BIOMES.DANGER_AREA]: {
+    bg: '#250709',
+    fog: '#1d0507',
+    sun: '#f87171',
+    ambient: '#7f1d1d',
+    hemiTop: '#fecaca',
+    hemiBottom: '#450a0a',
   },
 };
 
@@ -47,14 +63,17 @@ export function RainforestLighting() {
 
   useFrame((_, delta) => {
     const biome = gameState.getCurrentBiome();
-    const pal = BIOME_PALETTES[biome] || BIOME_PALETTES.FOREST;
-    const lerpSpeed = Math.min(delta * 2.0, 0.1);
+    const pal = ZONE_PALETTES[biome] || ZONE_PALETTES[BIOMES.LAGOS_OUTSKIRTS];
+    const lerpSpeed = Math.min(delta * 2.5, 0.12);
 
     if (bgRef.current) {
       bgRef.current.lerp(new THREE.Color(pal.bg), lerpSpeed);
     }
     if (fogRef.current) {
       fogRef.current.color.lerp(new THREE.Color(pal.fog), lerpSpeed);
+      // Dense fog during low-visibility chaos event
+      const targetFar = gameState.activeChaosEvent?.type === 'MIST_SURGE' ? 55 : (biome === BIOMES.DANGER_AREA ? 90 : 115);
+      fogRef.current.far = THREE.MathUtils.lerp(fogRef.current.far, targetFar, lerpSpeed);
     }
     if (sunRef.current) {
       sunRef.current.color.lerp(new THREE.Color(pal.sun), lerpSpeed);
@@ -66,14 +85,14 @@ export function RainforestLighting() {
 
   return (
     <>
-      {/* Dynamic Biome Sky & Atmosphere */}
+      {/* Dynamic Zone Sky & Fog */}
       <color ref={bgRef} attach="background" args={['#0e2617']} />
-      <fog ref={fogRef} attach="fog" args={['#0d2315', 38, 115]} />
+      <fog ref={fogRef} attach="fog" args={['#0d2315', 35, 115]} />
 
       {/* Dynamic Ambient Fill */}
-      <ambientLight ref={ambientRef} intensity={1.25} color="#86a88b" />
+      <ambientLight ref={ambientRef} intensity={1.3} color="#86a88b" />
 
-      {/* Hemisphere Light */}
+      {/* Hemisphere Sky Light */}
       <hemisphereLight
         ref={hemiRef}
         args={['#fef9c3', '#963c22', 1.35]}
@@ -97,7 +116,7 @@ export function RainforestLighting() {
         shadow-bias={-0.0004}
       />
 
-      {/* Rim light: Emerald supernatural edge illumination */}
+      {/* Supernatural Rim Lighting */}
       <directionalLight
         position={[-16, 15, -28]}
         intensity={0.9}
