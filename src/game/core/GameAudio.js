@@ -571,6 +571,10 @@ class GameAudioEngine {
     } catch (e) {}
   }
 
+  playCollision() {
+    this.playImpact();
+  }
+
   playHeartbeat(pressure = 0.5) {
     if (!this.isSoundOn || !this.ctx) return;
     const now = performance.now();

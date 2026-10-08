@@ -1,6 +1,7 @@
 import { userProfile } from '../progression/UserProfileManager.js';
 import { leaderboardManager } from '../progression/LeaderboardManager.js';
 import { gameAudio } from './GameAudio.js';
+import { environmentDirector, ENVIRONMENTS } from '../environment/EnvironmentDirector.js';
 
 export const GAME_STATUS = {
   LOADING: 'LOADING',
@@ -28,14 +29,7 @@ export const PLAYER_STATE = {
   DEAD: 'DEAD'
 };
 
-export const BIOMES = {
-  LAGOS_OUTSKIRTS: 'LAGOS_OUTSKIRTS',
-  BUSY_LAGOS_ROAD: 'BUSY_LAGOS_ROAD',
-  MARKET_AREA: 'MARKET_AREA',
-  DARK_FOREST: 'DARK_FOREST',
-  NIGHT_RUN: 'NIGHT_RUN',
-  DANGER_AREA: 'DANGER_AREA'
-};
+export const BIOMES = ENVIRONMENTS;
 
 class GameStateManager {
   constructor() {
@@ -57,8 +51,8 @@ class GameStateManager {
     this.countdownTimer = 0;
     this.distance = 0;
     
-    // Starting speed is fast and energetic immediately
-    this.baseStartSpeed = 21.0;
+    // Starting speed is fast and energetic immediately (23.5 m/s)
+    this.baseStartSpeed = 23.5;
     this.speed = this.baseStartSpeed;
     this.targetSpeed = this.baseStartSpeed;
     this.cash = 0;
@@ -125,28 +119,17 @@ class GameStateManager {
     }
   }
 
-  // 6 Distinct Environmental Zones
+  // Dynamic environment determination from Environment Director
   getCurrentBiome() {
-    const dist = this.distance % 3600;
-    if (dist < 400) return BIOMES.LAGOS_OUTSKIRTS;
-    if (dist < 900) return BIOMES.BUSY_LAGOS_ROAD;
-    if (dist < 1500) return BIOMES.MARKET_AREA;
-    if (dist < 2200) return BIOMES.DARK_FOREST;
-    if (dist < 3000) return BIOMES.NIGHT_RUN;
-    return BIOMES.DANGER_AREA;
+    return environmentDirector.getEnvironmentAtDistance(this.distance).currentEnv;
   }
 
   getBiomeDisplayName() {
-    const biome = this.getCurrentBiome();
-    switch (biome) {
-      case BIOMES.LAGOS_OUTSKIRTS: return 'LAGOS OUTSKIRTS';
-      case BIOMES.BUSY_LAGOS_ROAD: return 'BUSY LAGOS ROAD';
-      case BIOMES.MARKET_AREA: return 'MARKET AREA';
-      case BIOMES.DARK_FOREST: return 'DARK FOREST';
-      case BIOMES.NIGHT_RUN: return 'NIGHT RUN';
-      case BIOMES.DANGER_AREA: return 'HIGH-SPEED DANGER AREA';
-      default: return 'LAGOS OUTSKIRTS';
-    }
+    return environmentDirector.getEnvironmentAtDistance(this.distance).config.name;
+  }
+
+  getBiomeSubtitle() {
+    return environmentDirector.getEnvironmentAtDistance(this.distance).config.subtitle;
   }
 
   // Chaser 5-Phase Determination
@@ -170,26 +153,26 @@ class GameStateManager {
     }
   }
 
-  // Smooth progressive speed progression curve
+  // Smooth progressive speed progression curve (Starts fast at 23.5 m/s)
   calculateTargetSpeed() {
     const dist = this.distance;
-    // 0-500m (Start): 21.0 -> 24.5 m/s
-    // 500-1500m (Mid): 24.5 -> 29.0 m/s
-    // 1500-3000m (Late): 29.0 -> 34.0 m/s
-    // 3000m+ (Extreme): 34.0 -> 38.0+ m/s
+    // 0-500m (Start): 23.5 -> 29.5 m/s
+    // 500-1500m (Mid): 29.5 -> 35.5 m/s
+    // 1500-3000m (Late): 35.5 -> 41.0 m/s
+    // 3000m+ (Extreme): 41.0 -> 46.0+ m/s
     let calculated = this.baseStartSpeed;
     if (dist <= 500) {
-      calculated = 21.0 + (dist / 500) * 3.5;
+      calculated = 23.5 + (dist / 500) * 6.0;
     } else if (dist <= 1500) {
-      calculated = 24.5 + ((dist - 500) / 1000) * 4.5;
+      calculated = 29.5 + ((dist - 500) / 1000) * 6.0;
     } else if (dist <= 3000) {
-      calculated = 29.0 + ((dist - 1500) / 1500) * 5.0;
+      calculated = 35.5 + ((dist - 1500) / 1500) * 5.5;
     } else {
-      calculated = 34.0 + Math.min(6.0, ((dist - 3000) / 1500) * 4.0);
+      calculated = 41.0 + Math.min(6.0, ((dist - 3000) / 1500) * 5.0);
     }
 
     if (this.isSpeedBurstActive) {
-      calculated += 6.5; // Supersonic burst boost!
+      calculated += 7.0; // Supersonic burst boost!
     }
 
     return calculated;
@@ -197,6 +180,8 @@ class GameStateManager {
 
   getSnapshot() {
     this.updateChaserPhase();
+    const envData = environmentDirector.getEnvironmentAtDistance(this.distance);
+
     return {
       status: this.status,
       countdownValue: this.countdownValue,
@@ -230,8 +215,11 @@ class GameStateManager {
       reviveCountdown: Math.ceil(this.reviveCountdown),
       canReviveNaira: this.cash >= 1000 || userProfile.getSnapshot().wallet >= 1000,
       canRevivePoints: this.score >= 1500,
-      currentBiome: this.getCurrentBiome(),
-      biomeDisplayName: this.getBiomeDisplayName(),
+      currentBiome: envData.currentEnv,
+      biomeDisplayName: envData.config.name,
+      biomeSubtitle: envData.config.subtitle,
+      isTransition: envData.isTransition,
+      nextBiomeDisplayName: envData.nextConfig.name,
       speedLevel: Math.floor(this.distance / 100) + 1,
       lastRunResult: this.lastRunResult,
       activeChaosEvent: this.activeChaosEvent
@@ -241,10 +229,11 @@ class GameStateManager {
   // Start sequence with high energy 3 -> 2 -> 1 -> GO!
   startCountdown() {
     this.reset();
+    environmentDirector.resetForNewRun();
     gameAudio.resumeContext();
     const perks = userProfile.getActivePerks();
     this.guardianDistance = 22.0 + (perks.guardianStartDistanceBonus || 0);
-    this.baseStartSpeed = 21.0 + (perks.speedBonus || 0);
+    this.baseStartSpeed = 23.5 + (perks.speedBonus || 0);
     this.speed = this.baseStartSpeed;
     this.targetSpeed = this.baseStartSpeed;
     this.remainingShields = perks.shieldCount || 0;

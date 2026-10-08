@@ -1,21 +1,26 @@
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { gameState, GAME_STATUS, LANE, LANE_WIDTH, PLAYER_STATE, BIOMES } from '../core/GameState';
+import { gameState, GAME_STATUS, LANE_WIDTH, PLAYER_STATE } from '../core/GameState';
 import { gameAudio } from '../core/GameAudio';
 import {
-  LateritePath,
+  ForestTrack,
+  OutskirtsTrack,
+  HighwayTrack,
+  MarketTrack,
+  NightHighwayTrack,
+  OutskirtsShack,
+  NEPAPole,
+  BananaTree,
+  LagosTenement,
+  UnfinishedBuilding,
+  JerseyBarrier,
+  MarketUmbrellaStall,
+  NightStreetlight,
   IrokoTree,
   CarvedMonolith,
-  VillageHut,
   CeremonialTorchArch,
-  SuspensionBridge,
-  CaveTunnel,
-  DistantMistBackdrop,
-  MarketStall,
-  RoadSign,
-  StreetLamp,
-  DangerRunePillar
+  DynamicBackdrop
 } from './EnvironmentAssets';
 import { ObstacleItem } from '../obstacles/ObstacleManager';
 import { OBSTACLE_TYPE, PICKUP_TYPE } from '../obstacles/ObstacleConstants';
@@ -23,26 +28,16 @@ import { NairaCollectible } from '../collectibles/NairaCollectible';
 import { ValuablePickup } from '../collectibles/ValuablePickup';
 import { FrontWitch } from '../guardian/FrontWitch';
 import { collectibleRegistry } from './CollectibleRegistry';
-import { segmentEngine, SEGMENT_TYPE } from './SegmentEngine';
+import { segmentEngine } from './SegmentEngine';
+import { environmentDirector, ENVIRONMENTS } from './EnvironmentDirector';
 
 const CHUNK_LENGTH = 36;
-const TOTAL_CHUNKS = 8; // 8 chunks for deep horizon visibility (288m visible track)
+const TOTAL_CHUNKS = 8; // 8 chunks visible (288m view distance)
 
-// Determine biome from distance
-function getBiomeForDistance(distance) {
-  const dist = Math.abs(distance) % 3600;
-  if (dist < 400) return BIOMES.LAGOS_OUTSKIRTS;
-  if (dist < 900) return BIOMES.BUSY_LAGOS_ROAD;
-  if (dist < 1500) return BIOMES.MARKET_AREA;
-  if (dist < 2200) return BIOMES.DARK_FOREST;
-  if (dist < 3000) return BIOMES.NIGHT_RUN;
-  return BIOMES.DANGER_AREA;
-}
-
-// Generate unpredictable, highly varied chunk using Segment Engine
+// Create procedural chunk using Environment Director & Segment Engine
 function createProceduralChunk(chunkIdx, baseZ) {
   const distance = Math.abs(baseZ);
-  const biome = getBiomeForDistance(distance);
+  const { currentEnv, nextEnv, isTransition, config } = environmentDirector.getEnvironmentAtDistance(distance);
 
   // Very first starting chunk: gentle introductory sprint with initial Naira
   if (distance < 30) {
@@ -58,7 +53,10 @@ function createProceduralChunk(chunkIdx, baseZ) {
     }
     return {
       index: chunkIdx,
-      biome,
+      env: currentEnv,
+      nextEnv,
+      isTransition,
+      config,
       baseZ,
       obstacles: [],
       collectibles,
@@ -66,18 +64,22 @@ function createProceduralChunk(chunkIdx, baseZ) {
     };
   }
 
-  // Pick varied segment using 4-history exclusion cooldown!
+  // Pick varied segment obeying cooldown history and environment obstacle vocabulary
   const segType = segmentEngine.pickSegment(distance);
   const { obstacles, collectibles, valuables } = segmentEngine.generateSegmentContent(
     segType,
     chunkIdx,
     baseZ,
-    distance
+    distance,
+    config.allowedObstacles
   );
 
   return {
     index: chunkIdx,
-    biome,
+    env: currentEnv,
+    nextEnv,
+    isTransition,
+    config,
     baseZ,
     obstacles,
     collectibles,
@@ -94,13 +96,14 @@ export function WorldManager() {
   // Dynamic chunk pool data
   const [chunks, setChunks] = useState(() => {
     segmentEngine.reset();
+    environmentDirector.resetForNewRun();
     return Array.from({ length: TOTAL_CHUNKS }).map((_, idx) => {
       return createProceduralChunk(idx, -idx * CHUNK_LENGTH);
     });
   });
 
-  // Front witches state
   const [frontWitches, setFrontWitches] = useState([]);
+  const [currentBackdropType, setCurrentBackdropType] = useState('FOREST_MIST');
 
   // Reset positions on restart
   useEffect(() => {
@@ -108,6 +111,7 @@ export function WorldManager() {
       if ((snap.status === GAME_STATUS.COUNTDOWN || snap.status === GAME_STATUS.PLAYING) && snap.distance < 2) {
         collectibleRegistry.reset();
         segmentEngine.reset();
+        environmentDirector.resetForNewRun();
         hitObstaclesRef.current.clear();
         nearMissCheckedRef.current.clear();
         chunkGroupsRef.current.forEach((grp, idx) => {
@@ -124,7 +128,7 @@ export function WorldManager() {
     return unsubscribe;
   }, []);
 
-  // Update front witches state when gameState spawns them
+  // Update front witches state
   useEffect(() => {
     const checkWitches = () => {
       if (gameState.activeFrontWitches.length !== frontWitches.length) {
@@ -144,14 +148,20 @@ export function WorldManager() {
     const pState = gameState.playerState;
     const isMagnetActive = gameState.magnetTimer > 0;
 
-    // Follow player with distant mist backdrop
+    // Follow player with dynamic backdrop
     if (backdropRef.current) {
       backdropRef.current.position.z = pZ - 95;
     }
 
+    // Update backdrop type based on active environment
+    const { config } = environmentDirector.getEnvironmentAtDistance(gameState.distance);
+    if (config.backdropType !== currentBackdropType) {
+      setCurrentBackdropType(config.backdropType);
+    }
+
     const poolSpan = TOTAL_CHUNKS * CHUNK_LENGTH;
 
-    // Dynamic Chunk Recycling: leap forward and generate unpredictable fresh content!
+    // Dynamic Chunk Recycling: only keep current & upcoming chunks in memory!
     chunkGroupsRef.current.forEach((grp, chunkIdx) => {
       if (!grp) return;
       if (grp.position.z > pZ + 36) {
@@ -175,7 +185,7 @@ export function WorldManager() {
       if (!grp) continue;
       const chunkZ = grp.position.z;
 
-      // Only test chunks near runner
+      // Only test chunks in immediate proximity of runner
       if (Math.abs(chunkZ - pZ) > 55) continue;
 
       const data = chunks[cIdx];
@@ -192,8 +202,6 @@ export function WorldManager() {
 
         const noteWorldX = col.lane * LANE_WIDTH;
         const dx = Math.abs(pX - noteWorldX);
-
-        // Magnet range
         const maxDx = isMagnetActive ? 4.5 : 1.38;
 
         if (dx < maxDx && pY < (col.isHighJump ? 3.2 : 2.7)) {
@@ -203,7 +211,7 @@ export function WorldManager() {
         }
       }
 
-      // 2. Cultural Valuable Pickups, 2X Multiplier, and Point Catalyst Traps
+      // 2. Cultural Valuable Pickups, Multiplier, and Traps
       for (let i = 0; i < data.valuables.length; i++) {
         const val = data.valuables[i];
         const isCatalyst = val.type === PICKUP_TYPE.POINT_CATALYST;
@@ -247,7 +255,7 @@ export function WorldManager() {
         const obsWorldX = obs.lane * LANE_WIDTH;
         const dx = Math.abs(pX - obsWorldX);
 
-        // Near-miss check: player passed very close without colliding!
+        // Near-miss check
         if (
           !gameState.isDowned &&
           dz < 1.35 &&
@@ -260,7 +268,7 @@ export function WorldManager() {
           gameState.triggerNearMiss(obs.type);
         }
 
-        // Fatal/Impact Collision check
+        // Collision check
         if (!gameState.isDowned && !gameState.isInvincible && !gameState.isSpeedBurstActive) {
           if (hitObstaclesRef.current.has(obs.id)) continue;
           if (dz > 1.65) continue;
@@ -324,9 +332,9 @@ export function WorldManager() {
 
   return (
     <group>
-      {/* Distant Atmospheric Mist Backdrop */}
+      {/* Distant Dynamic Atmospheric Backdrop */}
       <group ref={backdropRef} position={[0, 0, -95]}>
-        <DistantMistBackdrop />
+        <DynamicBackdrop type={currentBackdropType} />
       </group>
 
       {/* Procedural Chunks */}
@@ -337,7 +345,8 @@ export function WorldManager() {
           position={[0, 0, data.baseZ]}
         >
           <ChunkContent
-            biome={data.biome}
+            env={data.env}
+            roadType={data.config.roadType}
             obstacles={data.obstacles}
             collectibles={data.collectibles}
             valuables={data.valuables}
@@ -353,71 +362,87 @@ export function WorldManager() {
   );
 }
 
-// Sub-component for chunk geometry and zone decorations
-function ChunkContent({ biome, obstacles, collectibles, valuables = [] }) {
+// Sub-component for chunk geometry, road type, and environment pack assets
+function ChunkContent({ env, roadType, obstacles, collectibles, valuables = [] }) {
   return (
     <group position={[0, 0, -CHUNK_LENGTH / 2]}>
-      {/* Track Base */}
-      <LateritePath length={CHUNK_LENGTH} width={7.6} />
+      {/* Modular Track based on Environment */}
+      {roadType === 'OUTSKIRTS_ROAD' ? (
+        <OutskirtsTrack length={CHUNK_LENGTH} width={7.6} />
+      ) : roadType === 'HIGHWAY_TARMAC' ? (
+        <HighwayTrack length={CHUNK_LENGTH} width={7.6} />
+      ) : roadType === 'MARKET_STREET' ? (
+        <MarketTrack length={CHUNK_LENGTH} width={7.6} />
+      ) : roadType === 'NIGHT_ASPHALT' ? (
+        <NightHighwayTrack length={CHUNK_LENGTH} width={7.6} />
+      ) : (
+        <ForestTrack length={CHUNK_LENGTH} width={7.6} />
+      )}
 
-      {/* Zone Scenery Variations */}
-      {biome === BIOMES.LAGOS_OUTSKIRTS && (
+      {/* Environment-Specific Side Modules & Props from Asset Packs */}
+      {env === ENVIRONMENTS.FOREST && (
         <>
           <IrokoTree position={[-5.8, 0, -8]} scale={1.2} />
           <IrokoTree position={[5.8, 0, 10]} scale={1.1} />
           <CarvedMonolith position={[-4.2, 0, 0]} rotationY={0.3} />
           <CarvedMonolith position={[4.2, 0, 4]} rotationY={-0.4} />
-          <VillageHut position={[-5.2, 0, -18]} rotationY={0.6} />
         </>
       )}
 
-      {biome === BIOMES.BUSY_LAGOS_ROAD && (
+      {env === ENVIRONMENTS.FOREST_VARIATION && (
         <>
-          <RoadSign position={[-4.8, 0, -6]} rotationY={0.2} />
-          <RoadSign position={[4.8, 0, 12]} rotationY={-0.2} />
-          <StreetLamp position={[-4.5, 0, -16]} />
-          <StreetLamp position={[4.5, 0, 4]} />
-          <CarvedMonolith position={[-4.2, 0, 8]} />
+          <IrokoTree position={[-5.8, 0, -10]} scale={1.3} />
+          <IrokoTree position={[5.8, 0, 8]} scale={1.25} />
+          <CarvedMonolith position={[-4.2, 0, -2]} />
+          <CarvedMonolith position={[4.2, 0, 6]} />
+          <CeremonialTorchArch position={[0, 0, -18]} />
         </>
       )}
 
-      {biome === BIOMES.MARKET_AREA && (
+      {env === ENVIRONMENTS.LAGOS_OUTSKIRTS && (
         <>
-          <MarketStall position={[-4.6, 0, -10]} rotationY={0.3} color="red" />
-          <MarketStall position={[4.6, 0, -10]} rotationY={-0.3} color="yellow" />
-          <MarketStall position={[-4.6, 0, 10]} rotationY={0.2} color="green" />
-          <MarketStall position={[4.6, 0, 10]} rotationY={-0.2} color="yellow" />
-          <VillageHut position={[5.2, 0, 0]} rotationY={-0.8} />
+          <OutskirtsShack position={[-5.4, 0, -10]} rotationY={0.4} />
+          <BananaTree position={[-5.2, 0, 8]} scale={1.1} />
+          <BananaTree position={[5.2, 0, -14]} scale={1.0} />
+          <NEPAPole position={[4.8, 0, 4]} />
+          <JerseyBarrier position={[4.8, 0, -6]} rotationY={0.2} />
         </>
       )}
 
-      {biome === BIOMES.DARK_FOREST && (
+      {env === ENVIRONMENTS.BUSY_LAGOS_ROAD && (
         <>
-          <IrokoTree position={[-5.6, 0, -12]} scale={1.4} />
-          <IrokoTree position={[5.6, 0, 6]} scale={1.35} />
+          <LagosTenement position={[-5.8, 0, -12]} rotationY={0.2} stories={3} />
+          <UnfinishedBuilding position={[5.8, 0, 6]} />
+          <JerseyBarrier position={[-4.8, 0, 8]} />
+          <JerseyBarrier position={[4.8, 0, -4]} />
+        </>
+      )}
+
+      {env === ENVIRONMENTS.MARKET_DISTRICT && (
+        <>
+          <MarketUmbrellaStall position={[-4.8, 0, -10]} color="red" />
+          <MarketUmbrellaStall position={[4.8, 0, -10]} color="yellow" />
+          <MarketUmbrellaStall position={[-4.8, 0, 10]} color="green" />
+          <MarketUmbrellaStall position={[4.8, 0, 10]} color="blue" />
+        </>
+      )}
+
+      {env === ENVIRONMENTS.DARK_FOREST && (
+        <>
+          <IrokoTree position={[-5.8, 0, -12]} scale={1.4} />
+          <IrokoTree position={[5.8, 0, 6]} scale={1.35} />
           <CarvedMonolith position={[-4.2, 0, -4]} />
-          <CarvedMonolith position={[4.2, 0, 4]} />
           <CeremonialTorchArch position={[0, 0, 0]} />
-          <pointLight position={[0, 3.5, 0]} color="#10b981" intensity={2.0} distance={14} />
+          <pointLight position={[0, 3.5, 0]} color="#10b981" intensity={2.2} distance={14} />
         </>
       )}
 
-      {biome === BIOMES.NIGHT_RUN && (
+      {env === ENVIRONMENTS.NIGHT_LAGOS && (
         <>
-          <StreetLamp position={[-4.5, 0, -14]} />
-          <StreetLamp position={[4.5, 0, 2]} />
-          <StreetLamp position={[-4.5, 0, 16]} />
-          <CarvedMonolith position={[4.2, 0, -6]} />
-          <CeremonialTorchArch position={[0, 0, 16]} />
-        </>
-      )}
-
-      {biome === BIOMES.DANGER_AREA && (
-        <>
-          <DangerRunePillar position={[-4.4, 0, -10]} />
-          <DangerRunePillar position={[4.4, 0, 6]} />
-          <CeremonialTorchArch position={[0, 0, -16]} />
-          <pointLight position={[0, 3.5, 0]} color="#ef4444" intensity={2.5} distance={15} />
+          <NightStreetlight position={[-4.8, 0, -14]} />
+          <NightStreetlight position={[4.8, 0, 4]} />
+          <NightStreetlight position={[-4.8, 0, 16]} />
+          <LagosTenement position={[5.8, 0, -12]} rotationY={-0.3} stories={2} />
         </>
       )}
 

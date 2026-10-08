@@ -73,10 +73,18 @@ class SegmentEngineManager {
   }
 
   // Build the concrete obstacles, Naira pickups, and valuables for a segment
-  generateSegmentContent(segmentType, chunkIdx, baseZ, distance) {
+  generateSegmentContent(segmentType, chunkIdx, baseZ, distance, allowedObstacleTypes = null) {
     const obstacles = [];
     const collectibles = [];
     const valuables = [];
+
+    // Filter obstacle type based on environment vocabulary
+    const pickObs = (preferredFallback) => {
+      if (allowedObstacleTypes && allowedObstacleTypes.length > 0) {
+        return OBSTACLE_TYPE[allowedObstacleTypes[Math.floor(Math.random() * allowedObstacleTypes.length)]] || preferredFallback;
+      }
+      return preferredFallback;
+    };
 
     // Random safe lane picker (-1, 0, 1)
     const randomLane = () => Math.floor(Math.random() * 3) - 1;
@@ -87,8 +95,7 @@ class SegmentEngineManager {
         // SEGMENT A: Open path + simple single hazard
         const safe = randomLane();
         const blocked = oppositeLanes(safe)[Math.floor(Math.random() * 2)];
-        const types = [OBSTACLE_TYPE.ROCK, OBSTACLE_TYPE.MUD_POTHOLE, OBSTACLE_TYPE.FIRE_BRAZIER, OBSTACLE_TYPE.OIL_DRUM_BARRICADE];
-        const chosenType = types[Math.floor(Math.random() * types.length)];
+        const chosenType = pickObs(OBSTACLE_TYPE.ROCK);
 
         obstacles.push({
           id: `obs_${chunkIdx}_a_${Math.random()}`,
@@ -127,7 +134,7 @@ class SegmentEngineManager {
 
         for (let i = 0; i < 3; i++) {
           const obsLane = sequence[i];
-          const obsType = [OBSTACLE_TYPE.ROCK, OBSTACLE_TYPE.OIL_DRUM_BARRICADE, OBSTACLE_TYPE.SACRED_TOTEM][i];
+          const obsType = pickObs(OBSTACLE_TYPE.OIL_DRUM_BARRICADE);
           obstacles.push({
             id: `obs_${chunkIdx}_b_${i}_${Math.random()}`,
             type: obsType,
@@ -150,21 +157,22 @@ class SegmentEngineManager {
       }
 
       case SEGMENT_TYPE.C_JUMP_FOCUS: {
-        // SEGMENT C: Jump-focused section (consecutive hurdles with mid-air Naira!)
+        // SEGMENT C: Jump-focused section (hurdles with mid-air Naira!)
         const jumpLane = randomLane();
         const otherLane = oppositeLanes(jumpLane)[0];
+        const hurdleType1 = pickObs(OBSTACLE_TYPE.WOODEN_BARRIER);
+        const hurdleType2 = pickObs(OBSTACLE_TYPE.SNAKE_PIT);
 
-        // 2 consecutive jump hurdles
         obstacles.push({
           id: `obs_${chunkIdx}_c1_${Math.random()}`,
-          type: OBSTACLE_TYPE.WOODEN_BARRIER,
+          type: hurdleType1,
           lane: jumpLane,
           z: -12,
           width: 1
         });
         obstacles.push({
           id: `obs_${chunkIdx}_c2_${Math.random()}`,
-          type: OBSTACLE_TYPE.SNAKE_PIT,
+          type: hurdleType2,
           lane: otherLane,
           z: -24,
           width: 1
@@ -209,21 +217,21 @@ class SegmentEngineManager {
 
         obstacles.push({
           id: `obs_${chunkIdx}_d1_${Math.random()}`,
-          type: OBSTACLE_TYPE.FIRE_BRAZIER,
+          type: pickObs(OBSTACLE_TYPE.FIRE_BRAZIER),
           lane: laneA,
           z: -11,
           width: 1
         });
         obstacles.push({
           id: `obs_${chunkIdx}_d2_${Math.random()}`,
-          type: OBSTACLE_TYPE.ROCK,
+          type: pickObs(OBSTACLE_TYPE.ROCK),
           lane: 0,
           z: -19,
           width: 1
         });
         obstacles.push({
           id: `obs_${chunkIdx}_d3_${Math.random()}`,
-          type: OBSTACLE_TYPE.OIL_DRUM_BARRICADE,
+          type: pickObs(OBSTACLE_TYPE.OIL_DRUM_BARRICADE),
           lane: laneB,
           z: -27,
           width: 1
@@ -244,14 +252,14 @@ class SegmentEngineManager {
 
         obstacles.push({
           id: `obs_${chunkIdx}_e1_${Math.random()}`,
-          type: OBSTACLE_TYPE.DANFO_WRECK,
+          type: pickObs(OBSTACLE_TYPE.DANFO_WRECK),
           lane: blocked1,
           z: -17,
           width: 1
         });
         obstacles.push({
           id: `obs_${chunkIdx}_e2_${Math.random()}`,
-          type: OBSTACLE_TYPE.SACRED_TOTEM,
+          type: pickObs(OBSTACLE_TYPE.OIL_DRUM_BARRICADE),
           lane: blocked2,
           z: -17,
           width: 1
@@ -268,7 +276,7 @@ class SegmentEngineManager {
           });
         }
 
-        // Tempting mega ₦5,000 note in front of blocked Danfo lane!
+        // Tempting mega ₦5,000 note in front of blocked lane!
         collectibles.push({
           id: `c_tempt_${chunkIdx}_${Math.random()}`,
           lane: blocked1,
@@ -281,12 +289,12 @@ class SegmentEngineManager {
 
       case SEGMENT_TYPE.F_TIMED_COMBO: {
         // SEGMENT F: Slide + Jump combination (spans lanes, requires varied mechanics)
-        const archType = Math.random() < 0.5 ? OBSTACLE_TYPE.FALLEN_TREE : OBSTACLE_TYPE.BENIN_STAFF_GATE;
-        
+        const archType = pickObs(OBSTACLE_TYPE.FALLEN_TREE);
+
         // Full width arch (MUST SLIDE!)
         obstacles.push({
           id: `obs_${chunkIdx}_f_slide_${Math.random()}`,
-          type: archType,
+          type: archType === OBSTACLE_TYPE.BENIN_STAFF_GATE ? OBSTACLE_TYPE.BENIN_STAFF_GATE : OBSTACLE_TYPE.FALLEN_TREE,
           lane: 0,
           z: -13,
           width: 3
@@ -296,7 +304,7 @@ class SegmentEngineManager {
         const hurdleLane = randomLane();
         obstacles.push({
           id: `obs_${chunkIdx}_f_jump_${Math.random()}`,
-          type: OBSTACLE_TYPE.WOODEN_BARRIER,
+          type: pickObs(OBSTACLE_TYPE.WOODEN_BARRIER),
           lane: hurdleLane,
           z: -25,
           width: 1
@@ -322,7 +330,7 @@ class SegmentEngineManager {
         for (let i = 0; i < 3; i++) {
           obstacles.push({
             id: `obs_${chunkIdx}_g_${i}_${Math.random()}`,
-            type: [OBSTACLE_TYPE.MUD_POTHOLE, OBSTACLE_TYPE.FIRE_BRAZIER, OBSTACLE_TYPE.ROCK][i],
+            type: pickObs(OBSTACLE_TYPE.ROCK),
             lane: pattern[i],
             z: -10 - i * 8,
             width: 1
@@ -343,11 +351,10 @@ class SegmentEngineManager {
 
       case SEGMENT_TYPE.H_ENV_TRANSITION: {
         // SEGMENT H: Environmental transition / scenic sprint with dense cash arc
-        // Minimal hazard, pure high-speed thrill and reward
         const sideLane = Math.random() < 0.5 ? -1 : 1;
         obstacles.push({
           id: `obs_${chunkIdx}_h_${Math.random()}`,
-          type: OBSTACLE_TYPE.SACRED_TOTEM,
+          type: pickObs(OBSTACLE_TYPE.SACRED_TOTEM),
           lane: sideLane,
           z: -20,
           width: 1
@@ -396,14 +403,14 @@ class SegmentEngineManager {
         const busLane = Math.random() < 0.5 ? -1 : 1;
         obstacles.push({
           id: `obs_${chunkIdx}_i_bus_${Math.random()}`,
-          type: OBSTACLE_TYPE.DANFO_WRECK,
+          type: pickObs(OBSTACLE_TYPE.DANFO_WRECK),
           lane: busLane,
           z: -14,
           width: 1
         });
         obstacles.push({
           id: `obs_${chunkIdx}_i_rock_${Math.random()}`,
-          type: OBSTACLE_TYPE.ROCK,
+          type: pickObs(OBSTACLE_TYPE.ROCK),
           lane: 0,
           z: -24,
           width: 1
@@ -425,14 +432,12 @@ class SegmentEngineManager {
 
       case SEGMENT_TYPE.J_RISK_REWARD: {
         // SEGMENT J: High-risk / high-reward decision section!
-        // SAFE LANE: open path, ₦100 notes
-        // RISKY LANE: blocked by hazard, but guarded with ₦5,000 note and 2X Multiplier right in front!
         const safeLane = -1;
         const riskyLane = 1;
 
         obstacles.push({
           id: `obs_${chunkIdx}_j_${Math.random()}`,
-          type: OBSTACLE_TYPE.OIL_DRUM_BARRICADE,
+          type: pickObs(OBSTACLE_TYPE.OIL_DRUM_BARRICADE),
           lane: riskyLane,
           z: -20,
           width: 1

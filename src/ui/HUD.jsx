@@ -6,6 +6,8 @@ export function HUD({ onPause }) {
   const [snapshot, setSnapshot] = useState(gameState.getSnapshot());
   const [showTouchButtons, setShowTouchButtons] = useState(false);
   const [nairaPop, setNairaPop] = useState(false);
+  const [currentEnvName, setCurrentEnvName] = useState(snapshot.biomeDisplayName);
+  const [envBanner, setEnvBanner] = useState('');
 
   useEffect(() => {
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
@@ -23,6 +25,16 @@ export function HUD({ onPause }) {
     });
     return unsubscribe;
   }, []);
+
+  // Environment transition announcement banner
+  useEffect(() => {
+    if (snapshot.biomeDisplayName && snapshot.biomeDisplayName !== currentEnvName && snapshot.distance > 10) {
+      setCurrentEnvName(snapshot.biomeDisplayName);
+      setEnvBanner(`📍 ENTERING: ${snapshot.biomeDisplayName}`);
+      const t = setTimeout(() => setEnvBanner(''), 2200);
+      return () => clearTimeout(t);
+    }
+  }, [snapshot.biomeDisplayName, currentEnvName, snapshot.distance]);
 
   // Strict enforcement: Alert banner and messages stay on screen for exactly 1.0s!
   useEffect(() => {
@@ -210,14 +222,16 @@ export function HUD({ onPause }) {
               padding: '8px 12px',
               display: 'flex',
               flexDirection: 'column',
-              background: '#FFFFFF',
+              background: snapshot.isTransition ? '#FFF0F3' : '#FFFFFF',
+              border: snapshot.isTransition ? '1px solid #ea580c' : undefined,
+              transition: 'background 0.3s ease, border-color 0.3s ease',
             }}
           >
-            <span style={{ fontSize: '0.62rem', color: '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
-              ZONE
+            <span style={{ fontSize: '0.62rem', color: snapshot.isTransition ? '#ea580c' : '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
+              {snapshot.isTransition ? 'APPROACHING' : 'ZONE'}
             </span>
-            <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#575074', fontFamily: "var(--font-sf-display)" }}>
-              {snapshot.biomeDisplayName}
+            <span style={{ fontSize: '0.82rem', fontWeight: 900, color: snapshot.isTransition ? '#ea580c' : '#575074', fontFamily: "var(--font-sf-display)" }}>
+              {snapshot.isTransition && snapshot.nextBiomeDisplayName ? snapshot.nextBiomeDisplayName : snapshot.biomeDisplayName}
             </span>
           </div>
 
@@ -296,6 +310,38 @@ export function HUD({ onPause }) {
           </button>
         </div>
       </div>
+
+      {/* Environment Transition Announcement Banner */}
+      {envBanner && (
+        <div
+          style={{
+            alignSelf: 'center',
+            background: 'linear-gradient(135deg, rgba(32, 33, 36, 0.95), rgba(87, 80, 116, 0.95))',
+            border: '2px solid #19B66B',
+            borderRadius: '16px',
+            padding: '10px 24px',
+            color: '#FFFFFF',
+            fontWeight: 900,
+            fontSize: '1.05rem',
+            fontFamily: 'var(--font-sf-display)',
+            letterSpacing: '0.8px',
+            boxShadow: '0 12px 36px rgba(25, 182, 107, 0.4)',
+            textAlign: 'center',
+            maxWidth: '90%',
+            animation: 'countdown-pop 0.35s ease',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '3px',
+          }}
+        >
+          <span>{envBanner}</span>
+          {snapshot.biomeSubtitle && (
+            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#a7f3d0' }}>
+              {snapshot.biomeSubtitle}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Center Alert Banner (Near Miss, Streaks, Speed Surges, Chaos Events) */}
       {snapshot.alertMessage && (
