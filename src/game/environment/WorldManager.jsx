@@ -39,18 +39,8 @@ function createProceduralChunk(chunkIdx, baseZ) {
   const distance = Math.abs(baseZ);
   const { currentEnv, nextEnv, isTransition, config } = environmentDirector.getEnvironmentAtDistance(distance);
 
-  // Very first starting chunk: gentle introductory sprint with initial Naira
+  // Very first starting chunk: clean high-speed introductory sprint
   if (distance < 30) {
-    const collectibles = [];
-    for (let i = 0; i < 7; i++) {
-      collectibles.push({
-        id: `c_start_${chunkIdx}_${i}`,
-        lane: 0,
-        z: -6 - i * 3.5,
-        value: 100,
-        isRisky: false
-      });
-    }
     return {
       index: chunkIdx,
       env: currentEnv,
@@ -59,7 +49,7 @@ function createProceduralChunk(chunkIdx, baseZ) {
       config,
       baseZ,
       obstacles: [],
-      collectibles,
+      collectibles: [],
       valuables: []
     };
   }

@@ -33,9 +33,13 @@ export function ChaseCamera({ targetRef, shakeIntensity = 0 }) {
       const pX = gameState.currentLane * 0.85;
       const pY = gameState.playerY || 0;
 
+      // Subtle running cadence bob (communicates stride rhythm while keeping obstacle view rock-steady)
+      const isRunning = gameState.playerState === 'RUNNING';
+      const runCadenceBob = isRunning ? Math.cos(performance.now() * 0.001 * (gameState.speed * 0.45)) * 0.024 : 0;
+
       // Camera position: behind and above player
       const idealX = pX;
-      const idealY = 3.6 + pY * 0.5;
+      const idealY = 3.6 + pY * 0.45 + runCadenceBob;
       const idealZ = pZ + 6.8;
 
       currentPos.current.x = THREE.MathUtils.lerp(currentPos.current.x, idealX, dt * 9.0);

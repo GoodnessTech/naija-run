@@ -1,13 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { gameState, GAME_STATUS } from '../game/core/GameState';
 import { gameAudio } from '../game/core/GameAudio';
 
 export function HUD({ onPause }) {
   const [snapshot, setSnapshot] = useState(gameState.getSnapshot());
   const [showTouchButtons, setShowTouchButtons] = useState(false);
-  const [nairaPop, setNairaPop] = useState(false);
-  const [currentEnvName, setCurrentEnvName] = useState(snapshot.biomeDisplayName);
-  const [envBanner, setEnvBanner] = useState('');
+  const [nairaDelta, setNairaDelta] = useState(null);
+  const [nairaDeltaKey, setNairaDeltaKey] = useState(0);
+
+  // Dedicated single-notification queue system
+  // Priority: 3 = HIGH (environment transition, downed), 2 = MEDIUM (speed surge, 2x, near-miss), 1 = LOW (streak, small bonus)
+  const [activeNotification, setActiveNotification] = useState(null);
+  const notificationQueue = useRef([]);
+  const notifTimeout = useRef(null);
+  const prevEnvRef = useRef(snapshot.biomeDisplayName);
 
   useEffect(() => {
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
@@ -17,431 +23,363 @@ export function HUD({ onPause }) {
     let prevCash = gameState.cash;
     const unsubscribe = gameState.subscribe((snap) => {
       setSnapshot(snap);
+
+      // Lightweight floating Naira pickup delta indicator (+₦500)
       if (snap.cash > prevCash) {
+        const diff = snap.cash - prevCash;
         prevCash = snap.cash;
-        setNairaPop(true);
-        setTimeout(() => setNairaPop(false), 260);
+        setNairaDelta(diff);
+        setNairaDeltaKey((k) => k + 1);
+        setTimeout(() => setNairaDelta(null), 220); // ~0.2s duration!
+      }
+
+      // Check environment transition
+      if (snap.biomeDisplayName && snap.biomeDisplayName !== prevEnvRef.current && snap.distance > 15) {
+        prevEnvRef.current = snap.biomeDisplayName;
+        queueNotification({
+          text: `🌲 ${snap.biomeDisplayName}`,
+          priority: 3,
+          duration: 750, // 0.75s for environment transition
+          theme: 'env'
+        });
+      }
+
+      // Check alert messages from GameState (speed surges, near misses, witches)
+      if (snap.alertMessage) {
+        const msg = snap.alertMessage;
+        gameState.alertMessage = ''; // Consume immediately to prevent duplicate stacking
+        const priority = msg.includes('WITCH') || msg.includes('DOWN') ? 3 : msg.includes('SPEED') || msg.includes('NEAR MISS') ? 2 : 1;
+        const duration = priority === 3 ? 650 : priority === 2 ? 300 : 220; // 0.15s - 0.3s for minor events!
+        queueNotification({
+          text: msg,
+          priority,
+          duration,
+          theme: priority === 3 ? 'danger' : 'accent'
+        });
       }
     });
     return unsubscribe;
   }, []);
 
-  // Environment transition announcement banner
-  useEffect(() => {
-    if (snapshot.biomeDisplayName && snapshot.biomeDisplayName !== currentEnvName && snapshot.distance > 10) {
-      setCurrentEnvName(snapshot.biomeDisplayName);
-      setEnvBanner(`📍 ENTERING: ${snapshot.biomeDisplayName}`);
-      const t = setTimeout(() => setEnvBanner(''), 2200);
-      return () => clearTimeout(t);
+  // Queue dispatcher: ensures ONLY ONE notification appears at a time, never stacks vertically
+  const queueNotification = (notif) => {
+    // If higher priority than currently active, interrupt immediately
+    if (activeNotification && notif.priority < activeNotification.priority) {
+      return; // Drop low priority if high is playing
     }
-  }, [snapshot.biomeDisplayName, currentEnvName, snapshot.distance]);
 
-  // Strict enforcement: Alert banner and messages stay on screen for exactly 1.0s!
-  useEffect(() => {
-    if (snapshot.alertMessage) {
-      const bannerTimer = setTimeout(() => {
-        if (gameState.alertMessage) {
-          gameState.alertMessage = '';
-          gameState.notify(true);
-        }
-      }, 1000);
-      return () => clearTimeout(bannerTimer);
+    if (notifTimeout.current) {
+      clearTimeout(notifTimeout.current);
     }
-  }, [snapshot.alertMessage]);
 
-  const handleToggleSound = () => {
-    gameState.toggleSound();
+    setActiveNotification(notif);
+    notifTimeout.current = setTimeout(() => {
+      setActiveNotification(null);
+    }, notif.duration);
   };
 
-  const handleToggleMusic = () => {
-    gameState.toggleMusic();
-  };
+  const handleToggleSound = () => gameState.toggleSound();
+  const handleToggleMusic = () => gameState.toggleMusic();
 
-  // Guardian danger styling based on 5 phases and strikes
-  const gDist = snapshot.guardianDistance;
+  // Guardian danger indicator styling
   const strikes = snapshot.strikes;
   const phase = snapshot.chaserPhase || 1;
-  
-  let dangerColor = '#19B66B';
-  let dangerStatus = snapshot.chaserPhaseTitle || 'DISTANT THREAT';
+  const gDist = snapshot.guardianDistance;
 
+  let dangerColor = '#19B66B';
+  let dangerTag = 'DISTANT';
   if (strikes >= 2 || phase >= 5) {
     dangerColor = '#d92550';
-    dangerStatus = 'PHASE 5: EXTREME DANGER!';
+    dangerTag = 'EXTREME DANGER';
   } else if (strikes === 1 || phase === 4) {
     dangerColor = '#ea580c';
-    dangerStatus = 'PHASE 4: AGGRESSIVE PURSUIT (1/2 HIT)';
+    dangerTag = 'PURSUIT';
   } else if (phase === 3) {
     dangerColor = '#d97706';
-    dangerStatus = 'PHASE 3: CLOSING IN';
+    dangerTag = 'CLOSING IN';
   } else if (phase === 2) {
     dangerColor = '#2F6FB7';
-    dangerStatus = 'PHASE 2: LURKING IN SHADOWS';
+    dangerTag = 'LURKING';
   }
 
-  const dangerPercent = Math.max(0, Math.min(100, Math.round(((22.0 - gDist) / 18.0) * 100)));
-
-  // Box alert stays for 1 second on status change
-  const [showDangerBox, setShowDangerBox] = useState(true);
-
-  useEffect(() => {
-    setShowDangerBox(true);
-    const boxTimer = setTimeout(() => {
-      setShowDangerBox(false);
-    }, 1000);
-    return () => clearTimeout(boxTimer);
-  }, [dangerStatus, strikes]);
-
   return (
-    <div className="ui-layer" style={{ padding: '16px 20px', justifyContent: 'space-between' }}>
-      {/* Top Header: Distance, Naira, Score & Audio Controls */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: '12px',
-        }}
-      >
-        {/* Left: Core Gameplay Stats */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          {/* DISTANCE */}
-          <div
-            className="glass-panel"
-            style={{
-              padding: '8px 14px',
-              display: 'flex',
-              flexDirection: 'column',
-              minWidth: '90px',
-            }}
-          >
-            <span style={{ fontSize: '0.62rem', color: '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
-              DISTANCE
-            </span>
-            <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#202124', fontFamily: "var(--font-sf-display)" }}>
-              {snapshot.distance} <span style={{ fontSize: '0.72rem', color: '#5f6368' }}>m</span>
-            </span>
-          </div>
-
-          {/* NAIRA (Strictly no coins label!) */}
-          <div
-            className="glass-panel"
-            style={{
-              padding: '8px 14px',
-              display: 'flex',
-              flexDirection: 'column',
-              minWidth: '115px',
-              border: nairaPop ? '2px solid #19B66B' : '1px solid rgba(25, 182, 107, 0.35)',
-              background: '#EAF8F0',
-              transform: nairaPop ? 'scale(1.08)' : 'scale(1)',
-              transition: 'transform 0.15s ease, border-color 0.15s ease',
-              boxShadow: nairaPop ? '0 4px 20px rgba(25, 182, 107, 0.4)' : undefined,
-            }}
-          >
-            <span style={{ fontSize: '0.62rem', color: '#19B66B', letterSpacing: '0.8px', fontWeight: 800 }}>
-              NAIRA
-            </span>
-            <span
-              style={{
-                fontSize: '1.25rem',
-                fontWeight: 900,
-                color: '#19B66B',
-                fontFamily: "var(--font-sf-display)",
-                display: 'flex',
-                alignItems: 'center',
-                gap: '3px',
-              }}
-            >
-              <span>₦</span>{snapshot.cash.toLocaleString()}
-            </span>
-          </div>
-
-          {/* SCORE */}
-          <div
-            className="glass-panel"
-            style={{
-              padding: '8px 14px',
-              display: 'flex',
-              flexDirection: 'column',
-              minWidth: '95px',
-            }}
-          >
-            <span style={{ fontSize: '0.62rem', color: '#2F6FB7', letterSpacing: '0.8px', fontWeight: 800 }}>
-              SCORE
-            </span>
-            <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#2F6FB7', fontFamily: "var(--font-sf-display)" }}>
-              {snapshot.score.toLocaleString()}
-            </span>
-          </div>
-
-          {/* NAIRA STREAK BADGE */}
-          {snapshot.nairaStreak >= 3 && (
+    <div
+      className="ui-layer"
+      style={{
+        padding: '12px 16px',
+        justifyContent: 'space-between',
+        pointerEvents: 'none', // Ensure clicks pass cleanly through empty areas
+      }}
+    >
+      {/* ==========================================
+          TOP PERMANENT HUD BAR (Compact, Minimal, Unobtrusive)
+          ========================================== */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
+        {/* ROW 1: PRIMARY STATS (Distance, Naira, Score, Audio Controls) */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          {/* Left: Essential Gameplay Numbers */}
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* DISTANCE */}
             <div
               className="glass-panel"
               style={{
-                padding: '8px 12px',
+                padding: '5px 10px',
                 display: 'flex',
-                flexDirection: 'column',
-                border: '1.5px solid #19B66B',
-                background: '#EAF8F0',
-                boxShadow: '0 4px 16px rgba(25, 182, 107, 0.35)',
-                animation: 'pulse-naira-glow 0.8s infinite ease-in-out',
+                alignItems: 'baseline',
+                gap: '4px',
+                background: 'rgba(255, 255, 255, 0.88)',
               }}
             >
-              <span style={{ fontSize: '0.62rem', color: '#19B66B', letterSpacing: '0.8px', fontWeight: 800 }}>
-                STREAK
-              </span>
-              <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#19B66B', fontFamily: "var(--font-sf-display)" }}>
-                🔥 x{snapshot.nairaStreak}
+              <span style={{ fontSize: '0.60rem', color: '#5f6368', fontWeight: 800 }}>DIST</span>
+              <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#202124', fontFamily: "var(--font-sf-display)" }}>
+                {snapshot.distance}<span style={{ fontSize: '0.65rem', color: '#5f6368', marginLeft: '1px' }}>m</span>
               </span>
             </div>
-          )}
 
+            {/* NAIRA WITH FLOATING DELTA INDICATOR */}
+            <div
+              className="glass-panel"
+              style={{
+                padding: '5px 10px',
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '4px',
+                background: '#EAF8F0',
+                border: '1px solid rgba(25, 182, 107, 0.4)',
+                position: 'relative',
+              }}
+            >
+              <span style={{ fontSize: '0.60rem', color: '#19B66B', fontWeight: 800 }}>NAIRA</span>
+              <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#19B66B', fontFamily: "var(--font-sf-display)" }}>
+                ₦{snapshot.cash.toLocaleString()}
+              </span>
+
+              {/* Tiny Floating Delta (+₦100, +₦500) for ~0.18s */}
+              {nairaDelta && (
+                <span
+                  key={nairaDeltaKey}
+                  style={{
+                    position: 'absolute',
+                    top: '-14px',
+                    right: '6px',
+                    fontSize: '0.72rem',
+                    fontWeight: 900,
+                    color: '#10b981',
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    padding: '1px 5px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
+                    animation: 'floatUpFade 0.22s ease-out forwards',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  +₦{nairaDelta.toLocaleString()}
+                </span>
+              )}
+            </div>
+
+            {/* SCORE */}
+            <div
+              className="glass-panel"
+              style={{
+                padding: '5px 10px',
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '4px',
+                background: 'rgba(255, 255, 255, 0.88)',
+              }}
+            >
+              <span style={{ fontSize: '0.60rem', color: '#2F6FB7', fontWeight: 800 }}>SCORE</span>
+              <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#2F6FB7', fontFamily: "var(--font-sf-display)" }}>
+                {snapshot.score.toLocaleString()}
+              </span>
+            </div>
+
+            {/* NAIRA STREAK INLINE BADGE (Discreet small pill) */}
+            {snapshot.nairaStreak >= 3 && (
+              <div
+                style={{
+                  padding: '3px 8px',
+                  borderRadius: '12px',
+                  background: '#19B66B',
+                  color: '#ffffff',
+                  fontSize: '0.68rem',
+                  fontWeight: 900,
+                  fontFamily: "var(--font-sf-display)",
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  boxShadow: '0 2px 8px rgba(25, 182, 107, 0.35)',
+                }}
+              >
+                <span>🔥</span>
+                <span>x{snapshot.nairaStreak}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Audio Toggles & Pause Button */}
+          <div style={{ display: 'flex', gap: '6px', pointerEvents: 'auto' }} className="ui-interactive">
+            <button
+              onClick={handleToggleMusic}
+              className="btn-icon"
+              title={snapshot.isMusicOn ? 'Mute Music' : 'Enable Music'}
+              aria-label="Toggle Music"
+              style={{ width: '32px', height: '32px', fontSize: '14px', color: snapshot.isMusicOn ? '#19B66B' : '#5f6368' }}
+            >
+              {snapshot.isMusicOn ? '🎵' : '🔇'}
+            </button>
+
+            <button
+              onClick={handleToggleSound}
+              className="btn-icon"
+              title={snapshot.isSoundOn ? 'Mute Sound FX' : 'Enable Sound FX'}
+              aria-label="Toggle Sound"
+              style={{ width: '32px', height: '32px', fontSize: '14px', color: snapshot.isSoundOn ? '#19B66B' : '#5f6368' }}
+            >
+              {snapshot.isSoundOn ? '🔊' : '🔈'}
+            </button>
+
+            <button
+              onClick={onPause}
+              className="btn-icon"
+              title="Pause Game (P)"
+              aria-label="Pause Game"
+              style={{ width: '32px', height: '32px', fontSize: '14px' }}
+            >
+              ⏸
+            </button>
+          </div>
+        </div>
+
+        {/* ROW 2: SECONDARY ROW (Speed, Zone, Chaser status, Buffs) */}
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* SPEED */}
           <div
             className="glass-panel"
             style={{
-              padding: '8px 12px',
-              display: 'flex',
-              flexDirection: 'column',
-              background: '#FFFFFF',
+              padding: '3px 8px',
+              fontSize: '0.70rem',
+              fontWeight: 800,
+              color: snapshot.isSpeedBurstActive ? '#0284c7' : '#374151',
+              background: snapshot.isSpeedBurstActive ? '#e0f2fe' : 'rgba(255, 255, 255, 0.75)',
             }}
           >
-            <span style={{ fontSize: '0.62rem', color: '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
-              SPEED
-            </span>
-            <span style={{ fontSize: '1.15rem', fontWeight: 900, color: snapshot.isSpeedBurstActive ? '#38bdf8' : '#202124', fontFamily: "var(--font-sf-display)" }}>
-              {snapshot.speed} <span style={{ fontSize: '0.68rem', color: '#5f6368' }}>m/s</span>
-            </span>
+            ⚡ {snapshot.speed} m/s
           </div>
 
-          {/* ZONE / BIOME BADGE */}
+          {/* ZONE */}
           <div
             className="glass-panel"
             style={{
-              padding: '8px 12px',
-              display: 'flex',
-              flexDirection: 'column',
-              background: snapshot.isTransition ? '#FFF0F3' : '#FFFFFF',
-              border: snapshot.isTransition ? '1px solid #ea580c' : undefined,
-              transition: 'background 0.3s ease, border-color 0.3s ease',
+              padding: '3px 8px',
+              fontSize: '0.70rem',
+              fontWeight: 800,
+              color: '#4b5563',
+              background: 'rgba(255, 255, 255, 0.75)',
             }}
           >
-            <span style={{ fontSize: '0.62rem', color: snapshot.isTransition ? '#ea580c' : '#5f6368', letterSpacing: '0.8px', fontWeight: 800 }}>
-              {snapshot.isTransition ? 'APPROACHING' : 'ZONE'}
-            </span>
-            <span style={{ fontSize: '0.82rem', fontWeight: 900, color: snapshot.isTransition ? '#ea580c' : '#575074', fontFamily: "var(--font-sf-display)" }}>
-              {snapshot.isTransition && snapshot.nextBiomeDisplayName ? snapshot.nextBiomeDisplayName : snapshot.biomeDisplayName}
-            </span>
+            📍 {snapshot.biomeDisplayName}
           </div>
 
-          {/* 2X MULTIPLIER ACTIVE */}
+          {/* CHASER THREAT TAG (Compact 1-line tag, replaces large danger box!) */}
+          <div
+            style={{
+              padding: '3px 8px',
+              borderRadius: '8px',
+              background: strikes >= 2 ? '#FFF0F3' : 'rgba(255, 255, 255, 0.75)',
+              border: `1px solid ${dangerColor}`,
+              color: dangerColor,
+              fontSize: '0.68rem',
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <span>{phase >= 4 ? '👹' : phase === 3 ? '⚠️' : '🌲'}</span>
+            <span>{dangerTag} ({gDist.toFixed(0)}m)</span>
+          </div>
+
+          {/* ACTIVE 2X MULTIPLIER */}
           {snapshot.pointMultiplier > 1 && (
             <div
-              className="glass-panel"
               style={{
-                padding: '8px 12px',
-                display: 'flex',
-                flexDirection: 'column',
-                border: '1.5px solid #19B66B',
+                padding: '3px 8px',
+                borderRadius: '8px',
                 background: '#EAF8F0',
+                border: '1px solid #19B66B',
+                color: '#19B66B',
+                fontSize: '0.68rem',
+                fontWeight: 900,
               }}
             >
-              <span style={{ fontSize: '0.62rem', color: '#19B66B', letterSpacing: '0.8px', fontWeight: 800 }}>
-                MULTIPLIER
-              </span>
-              <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#19B66B', fontFamily: "var(--font-sf-display)" }}>
-                ⚡ {snapshot.pointMultiplier}X ({snapshot.multiplierTimer}s)
-              </span>
+              ⚡ 2X ({snapshot.multiplierTimer}s)
             </div>
           )}
 
           {/* ACTIVE SHIELD */}
           {snapshot.remainingShields > 0 && (
             <div
-              className="glass-panel"
               style={{
-                padding: '8px 12px',
-                display: 'flex',
-                flexDirection: 'column',
-                border: '1.5px solid #2F6FB7',
-                background: '#FFFFFF',
+                padding: '3px 8px',
+                borderRadius: '8px',
+                background: '#eff6ff',
+                border: '1px solid #2F6FB7',
+                color: '#2F6FB7',
+                fontSize: '0.68rem',
+                fontWeight: 900,
               }}
             >
-              <span style={{ fontSize: '0.62rem', color: '#2F6FB7', letterSpacing: '0.8px', fontWeight: 800 }}>
-                SHIELD
-              </span>
-              <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#2F6FB7', fontFamily: "var(--font-sf-display)" }}>
-                🛡️ {snapshot.remainingShields}
-              </span>
+              🛡️ {snapshot.remainingShields}
             </div>
           )}
         </div>
 
-        {/* Right: Audio Toggles & Pause Button */}
-        <div style={{ display: 'flex', gap: '8px' }} className="ui-interactive">
-          <button
-            onClick={handleToggleMusic}
-            className="btn-icon"
-            title={snapshot.isMusicOn ? 'Mute Music' : 'Enable Music'}
-            aria-label="Toggle Music"
-            style={{ color: snapshot.isMusicOn ? '#19B66B' : '#5f6368' }}
-          >
-            {snapshot.isMusicOn ? '🎵' : '🔇'}
-          </button>
-
-          <button
-            onClick={handleToggleSound}
-            className="btn-icon"
-            title={snapshot.isSoundOn ? 'Mute Sound FX' : 'Enable Sound FX'}
-            aria-label="Toggle Sound"
-            style={{ color: snapshot.isSoundOn ? '#19B66B' : '#5f6368' }}
-          >
-            {snapshot.isSoundOn ? '🔊' : '🔈'}
-          </button>
-
-          <button
-            onClick={onPause}
-            className="btn-icon"
-            title="Pause Game (P)"
-            aria-label="Pause Game"
-          >
-            ⏸
-          </button>
-        </div>
-      </div>
-
-      {/* Environment Transition Announcement Banner */}
-      {envBanner && (
-        <div
-          style={{
-            alignSelf: 'center',
-            background: 'linear-gradient(135deg, rgba(32, 33, 36, 0.95), rgba(87, 80, 116, 0.95))',
-            border: '2px solid #19B66B',
-            borderRadius: '16px',
-            padding: '10px 24px',
-            color: '#FFFFFF',
-            fontWeight: 900,
-            fontSize: '1.05rem',
-            fontFamily: 'var(--font-sf-display)',
-            letterSpacing: '0.8px',
-            boxShadow: '0 12px 36px rgba(25, 182, 107, 0.4)',
-            textAlign: 'center',
-            maxWidth: '90%',
-            animation: 'countdown-pop 0.35s ease',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '3px',
-          }}
-        >
-          <span>{envBanner}</span>
-          {snapshot.biomeSubtitle && (
-            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#a7f3d0' }}>
-              {snapshot.biomeSubtitle}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Center Alert Banner (Near Miss, Streaks, Speed Surges, Chaos Events) */}
-      {snapshot.alertMessage && (
-        <div
-          style={{
-            alignSelf: 'center',
-            background: strikes >= 2 ? '#FFF0F3' : '#FFFFFF',
-            border: strikes >= 2 ? '2px solid #d92550' : '2px solid #19B66B',
-            borderRadius: '16px',
-            padding: '12px 28px',
-            color: strikes >= 2 ? '#d92550' : '#202124',
-            fontWeight: 800,
-            fontSize: '1.05rem',
-            fontFamily: "var(--font-sf-display)",
-            letterSpacing: '0.5px',
-            boxShadow: '0 12px 36px rgba(87, 80, 116, 0.35)',
-            textAlign: 'center',
-            maxWidth: '90%',
-            animation: 'countdown-pop 0.3s ease',
-          }}
-        >
-          {snapshot.alertMessage}
-        </div>
-      )}
-
-      {/* Chaser Danger Box Gauge - Stays for 1 second on status change */}
-      <div
-        style={{
-          alignSelf: 'center',
-          maxWidth: '380px',
-          width: '100%',
-          marginTop: showDangerBox ? '6px' : '0px',
-          opacity: showDangerBox ? 1 : 0,
-          transform: showDangerBox ? 'translateY(0)' : 'translateY(-8px)',
-          transition: 'opacity 0.25s ease, transform 0.25s ease, max-height 0.3s ease, margin 0.25s ease',
-          maxHeight: showDangerBox ? '80px' : '0px',
-          overflow: 'hidden',
-          pointerEvents: showDangerBox ? 'auto' : 'none',
-        }}
-      >
-        <div
-          className="glass-panel"
-          style={{
-            padding: '8px 14px',
-            border: `1.5px solid ${dangerColor}`,
-            background: strikes >= 2 ? '#FFF0F3' : '#FFFFFF',
-            boxShadow: '0 8px 24px rgba(32, 33, 36, 0.08)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                letterSpacing: '0.5px',
-                color: dangerColor,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontFamily: "var(--font-sf-text)",
-              }}
-            >
-              <span>{phase >= 4 ? '👹' : phase === 3 ? '⚠️' : '🌲'}</span>
-              <span>{dangerStatus}</span>
-            </span>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                fontWeight: 900,
-                color: dangerColor,
-                fontFamily: "var(--font-sf-display)",
-              }}
-            >
-              {snapshot.guardianDistance.toFixed(1)}m
-            </span>
-          </div>
-
+        {/* ==========================================
+            DEDICATED COMPACT TOP NOTIFICATION PILL
+            - Under permanent HUD
+            - Minimal vertical space (26px height)
+            - Short duration (0.15s - 0.75s)
+            - Exactly ONE at a time
+            - ZERO screen blocking of character or running path!
+            ========================================== */}
+        {activeNotification && (
           <div
             style={{
-              width: '100%',
-              height: '6px',
-              background: 'rgba(0, 0, 0, 0.06)',
-              borderRadius: '999px',
+              alignSelf: 'center',
+              marginTop: '4px',
+              padding: '4px 14px',
+              borderRadius: '20px',
+              background:
+                activeNotification.theme === 'danger'
+                  ? 'rgba(217, 37, 80, 0.94)'
+                  : activeNotification.theme === 'env'
+                  ? 'rgba(15, 23, 42, 0.92)'
+                  : 'rgba(25, 182, 107, 0.94)',
+              backdropFilter: 'blur(8px)',
+              color: '#ffffff',
+              fontSize: '0.78rem',
+              fontWeight: 800,
+              fontFamily: 'var(--font-sf-display)',
+              letterSpacing: '0.3px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.18)',
+              pointerEvents: 'none',
+              animation: 'quickFadePop 0.15s ease-out',
+              maxWidth: '85%',
+              whiteSpace: 'nowrap',
               overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
-            <div
-              style={{
-                width: `${dangerPercent}%`,
-                height: '100%',
-                background: dangerColor,
-                borderRadius: '999px',
-                transition: 'width 0.2s ease, background 0.3s ease',
-              }}
-            />
+            {activeNotification.text}
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Mobile Controls */}
+      {/* ==========================================
+          BOTTOM MOBILE TOUCH CONTROLS
+          ========================================== */}
       {showTouchButtons && (
         <div
           className="ui-interactive"
@@ -451,23 +389,25 @@ export function HUD({ onPause }) {
             alignItems: 'flex-end',
             width: '100%',
             paddingBottom: '8px',
+            pointerEvents: 'auto',
           }}
         >
-          <div style={{ display: 'flex', gap: '12px' }}>
+          {/* Steering Controls (Left & Right) */}
+          <div style={{ display: 'flex', gap: '10px' }}>
             <button
               onClick={() => window.__naija_lane && window.__naija_lane(-1)}
               style={{
-                width: '62px',
-                height: '62px',
+                width: '58px',
+                height: '58px',
                 borderRadius: '50%',
-                background: '#FFFFFF',
-                border: '1px solid rgba(0, 0, 0, 0.08)',
+                background: 'rgba(255, 255, 255, 0.92)',
+                border: '1px solid rgba(0, 0, 0, 0.10)',
                 color: '#202124',
-                fontSize: '22px',
+                fontSize: '20px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 6px 18px rgba(32, 33, 36, 0.15)',
+                boxShadow: '0 4px 14px rgba(32, 33, 36, 0.15)',
                 cursor: 'pointer',
               }}
               aria-label="Steer Left"
@@ -477,17 +417,17 @@ export function HUD({ onPause }) {
             <button
               onClick={() => window.__naija_lane && window.__naija_lane(1)}
               style={{
-                width: '62px',
-                height: '62px',
+                width: '58px',
+                height: '58px',
                 borderRadius: '50%',
-                background: '#FFFFFF',
-                border: '1px solid rgba(0, 0, 0, 0.08)',
+                background: 'rgba(255, 255, 255, 0.92)',
+                border: '1px solid rgba(0, 0, 0, 0.10)',
                 color: '#202124',
-                fontSize: '22px',
+                fontSize: '20px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 6px 18px rgba(32, 33, 36, 0.15)',
+                boxShadow: '0 4px 14px rgba(32, 33, 36, 0.15)',
                 cursor: 'pointer',
               }}
               aria-label="Steer Right"
@@ -496,24 +436,24 @@ export function HUD({ onPause }) {
             </button>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px' }}>
+          {/* Action Controls (Slide & Jump) */}
+          <div style={{ display: 'flex', gap: '10px' }}>
             <button
               onClick={() => window.__naija_slide && window.__naija_slide()}
               style={{
-                width: '62px',
-                height: '62px',
+                width: '58px',
+                height: '58px',
                 borderRadius: '50%',
                 background: '#FFF0F3',
-                border: '1.5px solid rgba(217, 37, 80, 0.3)',
+                border: '1.5px solid rgba(217, 37, 80, 0.35)',
                 color: '#d92550',
-                fontSize: '12px',
+                fontSize: '11px',
                 fontWeight: 900,
                 fontFamily: "var(--font-sf-display)",
-                letterSpacing: '0.5px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 6px 18px rgba(217, 37, 80, 0.15)',
+                boxShadow: '0 4px 14px rgba(217, 37, 80, 0.15)',
                 cursor: 'pointer',
               }}
               aria-label="Slide"
@@ -523,20 +463,19 @@ export function HUD({ onPause }) {
             <button
               onClick={() => window.__naija_jump && window.__naija_jump()}
               style={{
-                width: '68px',
-                height: '68px',
+                width: '64px',
+                height: '64px',
                 borderRadius: '50%',
                 background: '#19B66B',
                 border: 'none',
                 color: '#ffffff',
-                fontSize: '13px',
+                fontSize: '12px',
                 fontWeight: 900,
                 fontFamily: "var(--font-sf-display)",
-                letterSpacing: '0.5px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 8px 24px rgba(25, 182, 107, 0.4)',
+                boxShadow: '0 6px 20px rgba(25, 182, 107, 0.4)',
                 cursor: 'pointer',
               }}
               aria-label="Jump"
