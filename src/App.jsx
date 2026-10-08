@@ -70,6 +70,7 @@ class CanvasErrorBoundary extends React.Component {
 export default function App() {
   const [status, setStatus] = useState(gameState.status);
   const [countdownVal, setCountdownVal] = useState(gameState.countdownValue);
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
 
   useEffect(() => {
     const unsubscribe = gameState.subscribe((snap) => {
